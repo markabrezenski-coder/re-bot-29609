@@ -1,0 +1,41 @@
+name: RE Bot Daily Scan
+
+on:
+  schedule:
+    # 6:00 AM EST = 11:00 AM UTC (UTC-5 in winter, UTC-4 in summer)
+    # Using 11:00 UTC covers EST; adjust to 10:00 UTC during EDT (summer)
+    - cron: "0 11 * * *"
+  workflow_dispatch:  # also allows manual trigger from GitHub UI
+
+jobs:
+  run-re-bot:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # needed to commit the updated HTML and known_listings.json
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run RE Bot scraper
+        env:
+          GMAIL_USER:         ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python scraper.py
+
+      - name: Commit updated files back to repo
+        run: |
+          git config user.name  "RE Bot"
+          git config user.email "re-bot@github-actions"
+          git add known_listings.json re_bot_29609.html
+          git diff --cached --quiet || git commit -m "RE Bot daily update — $(date +'%Y-%m-%d')"
+          git push

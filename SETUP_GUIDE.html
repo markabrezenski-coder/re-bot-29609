@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE Bot Setup Guide</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 760px; margin: 40px auto; padding: 0 24px 60px; color: #1a1a18; line-height: 1.7; }
+  h1 { font-size: 22px; font-weight: 500; border-bottom: 1px solid #e0dfd8; padding-bottom: 12px; margin-bottom: 24px; }
+  h2 { font-size: 17px; font-weight: 500; margin: 32px 0 10px; display: flex; align-items: center; gap: 10px; }
+  .step-num { background: #1a1a18; color: #fff; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+  p { margin: 0 0 10px; }
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 6px; }
+  code { background: #f1f0e8; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+  .box { background: #f8f7f2; border: 1px solid #e0dfd8; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-size: 13px; }
+  .box.warn { background: #fffbf2; border-color: #f5c4b3; }
+  .box.ok   { background: #EAF3DE; border-color: #9FE1CB; }
+  .box code { background: #e8e7df; }
+  img-placeholder { display: block; background: #f1f0e8; border-radius: 6px; height: 32px; }
+  a { color: #185FA5; }
+  .toc { background: #f8f7f2; border-radius: 8px; padding: 14px 18px 14px 28px; margin-bottom: 28px; font-size: 13px; }
+  .toc li { margin-bottom: 4px; }
+  hr { border: none; border-top: 1px solid #e0dfd8; margin: 32px 0; }
+  .time-badge { font-size: 11px; background: #E6F1FB; color: #0C447C; padding: 2px 8px; border-radius: 4px; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<h1>RE Bot — Setup Guide <span class="time-badge">~20 minutes total</span></h1>
+
+<p>This guide walks you through setting up the RE Bot to run automatically every day at 6am EST, email you results, and update your HTML tracker file — all for free.</p>
+
+<ol class="toc">
+  <li><a href="#step1">Create a GitHub account</a></li>
+  <li><a href="#step2">Create a new repository</a></li>
+  <li><a href="#step3">Upload the files</a></li>
+  <li><a href="#step4">Set up Gmail App Password</a></li>
+  <li><a href="#step5">Add secrets to GitHub</a></li>
+  <li><a href="#step6">Test it manually</a></li>
+  <li><a href="#step7">Download your updated HTML tracker</a></li>
+</ol>
+
+<hr>
+
+<h2><span class="step-num">1</span> Create a GitHub account <span class="time-badge" id="step1">2 min</span></h2>
+
+<ol>
+  <li>Go to <a href="https://github.com" target="_blank">github.com</a></li>
+  <li>Click <strong>Sign up</strong> in the top right</li>
+  <li>Enter your email, create a password, choose a username</li>
+  <li>Verify your email address when prompted</li>
+</ol>
+
+<div class="box ok">GitHub is free. You don't need a paid plan — the free tier includes more than enough automation hours for a daily script.</div>
+
+<hr>
+
+<h2><span class="step-num">2</span> Create a new repository <span class="time-badge" id="step2">2 min</span></h2>
+
+<ol>
+  <li>Once logged in, click the <strong>+</strong> icon in the top right → <strong>New repository</strong></li>
+  <li>Name it: <code>re-bot-29609</code></li>
+  <li>Set visibility to <strong>Private</strong> (keeps your listing data private)</li>
+  <li>Check <strong>Add a README file</strong></li>
+  <li>Click <strong>Create repository</strong></li>
+</ol>
+
+<hr>
+
+<h2><span class="step-num">3</span> Upload the files <span class="time-badge" id="step3">5 min</span></h2>
+
+<p>You need to upload these 5 files to your repository. You can do this through the GitHub website — no coding tools needed.</p>
+
+<div class="box">
+  <strong>Files to upload:</strong>
+  <ul style="margin-top:8px">
+    <li><code>scraper.py</code> — the main script</li>
+    <li><code>requirements.txt</code> — Python dependencies</li>
+    <li><code>known_listings.json</code> — starts as <code>{}</code>, grows over time</li>
+    <li><code>re_bot_29609.html</code> — your HTML tracker</li>
+    <li><code>.github/workflows/re_bot_daily.yml</code> — the scheduler</li>
+  </ul>
+</div>
+
+<p><strong>How to upload each file:</strong></p>
+<ol>
+  <li>In your repository, click <strong>Add file</strong> → <strong>Upload files</strong></li>
+  <li>Drag the files in (or click to browse)</li>
+  <li>Click <strong>Commit changes</strong></li>
+</ol>
+
+<div class="box warn">
+  <strong>The workflow file needs a folder.</strong> The file <code>re_bot_daily.yml</code> must live inside a folder called <code>.github/workflows/</code>. To create it on GitHub:
+  <ol style="margin-top:8px">
+    <li>Click <strong>Add file</strong> → <strong>Create new file</strong></li>
+    <li>In the filename box, type: <code>.github/workflows/re_bot_daily.yml</code> (GitHub will auto-create the folders as you type the slashes)</li>
+    <li>Copy and paste the contents of <code>re_bot_daily.yml</code> into the editor</li>
+    <li>Click <strong>Commit new file</strong></li>
+  </ol>
+</div>
+
+<hr>
+
+<h2><span class="step-num">4</span> Set up Gmail App Password <span class="time-badge" id="step4">5 min</span></h2>
+
+<p>Gmail requires an "App Password" for automated sending — this is a special password just for this script, separate from your normal Gmail password.</p>
+
+<ol>
+  <li>Go to <a href="https://myaccount.google.com/security" target="_blank">myaccount.google.com/security</a></li>
+  <li>Make sure <strong>2-Step Verification</strong> is turned on (required for App Passwords)</li>
+  <li>Search for <strong>App passwords</strong> in the search bar at the top of your Google Account page</li>
+  <li>Click <strong>App passwords</strong></li>
+  <li>At the bottom, enter a name like <code>RE Bot</code> and click <strong>Create</strong></li>
+  <li>Google will show you a 16-character password like <code>abcd efgh ijkl mnop</code></li>
+  <li><strong>Copy it now</strong> — you won't see it again. Remove the spaces when you use it: <code>abcdefghijklmnop</code></li>
+</ol>
+
+<div class="box warn">Keep this password safe. Anyone with it can send email from your Gmail account via this script. You can revoke it any time from the same App passwords page.</div>
+
+<hr>
+
+<h2><span class="step-num">5</span> Add secrets to GitHub <span class="time-badge" id="step5">3 min</span></h2>
+
+<p>GitHub Secrets store your credentials securely so the script can access them without exposing them in your code.</p>
+
+<ol>
+  <li>In your repository, click <strong>Settings</strong> (top tab)</li>
+  <li>In the left sidebar, click <strong>Secrets and variables</strong> → <strong>Actions</strong></li>
+  <li>Click <strong>New repository secret</strong> and add these two secrets:</li>
+</ol>
+
+<div class="box">
+  <strong>Secret 1:</strong><br>
+  Name: <code>GMAIL_USER</code><br>
+  Value: your full Gmail address, e.g. <code>yourname@gmail.com</code>
+  <br><br>
+  <strong>Secret 2:</strong><br>
+  Name: <code>GMAIL_APP_PASSWORD</code><br>
+  Value: the 16-character app password from Step 4 (no spaces), e.g. <code>abcdefghijklmnop</code>
+</div>
+
+<hr>
+
+<h2><span class="step-num">6</span> Test it manually <span class="time-badge" id="step6">2 min</span></h2>
+
+<p>Before waiting until 6am, trigger a manual run to make sure everything works.</p>
+
+<ol>
+  <li>In your repository, click the <strong>Actions</strong> tab</li>
+  <li>In the left sidebar, click <strong>RE Bot Daily Scan</strong></li>
+  <li>Click <strong>Run workflow</strong> → <strong>Run workflow</strong> (green button)</li>
+  <li>Wait 1–2 minutes — you'll see a yellow spinner, then a green checkmark</li>
+  <li>Click the run to see the log output</li>
+  <li>Check your email at <code>markbrezenski@yahoo.com</code> — you should receive the first report</li>
+</ol>
+
+<div class="box warn">
+  <strong>If the run fails</strong> (red X), click into it and look at the error in the log. Common fixes:
+  <ul style="margin-top:8px">
+    <li>Red X on "Send email": double-check your <code>GMAIL_APP_PASSWORD</code> secret has no spaces</li>
+    <li>Red X on "Commit": make sure the repository has <strong>Write</strong> permissions enabled under Settings → Actions → General → Workflow permissions → select "Read and write permissions"</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2><span class="step-num">7</span> Download your updated HTML tracker <span class="time-badge" id="step7">1 min</span></h2>
+
+<p>After each run, GitHub automatically commits the updated <code>re_bot_29609.html</code> and <code>known_listings.json</code> back to your repository.</p>
+
+<p>To get the latest version of your HTML tracker:</p>
+<ol>
+  <li>Go to your repository on github.com</li>
+  <li>Click <code>re_bot_29609.html</code></li>
+  <li>Click the download icon (↓) or <strong>Raw</strong> → then File → Save As in your browser</li>
+</ol>
+
+<div class="box ok">
+  <strong>You're all set!</strong> The bot will now run every day at 6am EST automatically. You'll receive an email at <code>markbrezenski@yahoo.com</code> whether or not there are new listings — the subject line will tell you at a glance:
+  <ul style="margin-top:8px">
+    <li>🟡 <em>"RE Bot · 2 NEW listing(s) found · March 18, 2026"</em></li>
+    <li>🔵 <em>"RE Bot · 1 price drop · March 19, 2026"</em></li>
+    <li>⚪ <em>"RE Bot · Daily update · March 20, 2026 · 15 active listings"</em></li>
+  </ul>
+</div>
+
+<hr>
+
+<h2>Adjusting the schedule</h2>
+
+<p>The schedule is set in <code>.github/workflows/re_bot_daily.yml</code>. The current setting is <code>0 11 * * *</code> which is 11:00 UTC = 6:00 AM EST (winter) / 7:00 AM EDT (summer).</p>
+
+<p>To run at 6am year-round accounting for daylight saving, you can set two schedules:</p>
+
+<div class="box">
+<code>
+on:<br>
+&nbsp;&nbsp;schedule:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;- cron: "0 11 * * *"&nbsp;&nbsp;# 6am EST (Nov–Mar)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;- cron: "0 10 * * *"&nbsp;&nbsp;# 6am EDT (Mar–Nov)
+</code>
+</div>
+
+<p>This means it runs twice on the days clocks change, but that's harmless.</p>
+
+<hr>
+
+<p style="font-size:12px;color:#888780;text-align:center">RE Bot Setup Guide · Generated March 17, 2026</p>
+
+</body>
+</html>
