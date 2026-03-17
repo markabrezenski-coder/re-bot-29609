@@ -290,7 +290,7 @@ def build_email_html(current: list, new_listings: list, price_drops: list, known
           <td style="padding:8px 10px;border-bottom:1px solid #f0efe8;font-size:12px">{item.get('dist','—')} mi</td>
           <td style="padding:8px 10px;border-bottom:1px solid #f0efe8;font-size:12px">{fmt_price(item.get('price'))}</td>
           <td style="padding:8px 10px;border-bottom:1px solid #f0efe8;font-size:12px">{fmt_cap(item.get('cap'))}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0efe8;font-size:12px">{item.get('sqft', '—'):,} SF" if item.get('sqft') else "—"}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0efe8;font-size:12px">{str(item['sqft']) + ' SF' if item.get('sqft') else '—'}</td>
           <td style="padding:8px 10px;border-bottom:1px solid #f0efe8;font-size:12px">
             <a href="{item.get('url','#')}" style="color:#185FA5">Listing</a> &nbsp;
             <a href="{maps_url}" style="color:#185FA5">Map</a>
