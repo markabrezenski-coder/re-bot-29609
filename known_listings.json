@@ -1,1 +1,101 @@
-{}
+{
+  "000-8402-8432-standustrial-st-8402-8432-standustrial-st": {
+    "price": 2630000,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "000 8402-8432 Standustrial St 8402-8432 Standustrial St",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "460-dollar-general-5419-us-highway": {
+    "price": 1683460,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "460 Dollar General 5419 US Highway",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "4-564-132-trulieve-3945-a1a-s-st-augustine-beach-fl-320": {
+    "price": 4564132,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "$4,564,132 Trulieve 3945 A1A S, St. Augustine Beach, FL, 320",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "3201-peoples-st": {
+    "price": 2661905,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "3201 Peoples St",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "000-cadence-academy-1451-park-blvd": {
+    "price": 4560000,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "000 Cadence Academy 1451 Park Blvd",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "000-la-petite-academy-1529-mundys-mill-rd": {
+    "price": 2000000,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "000 La Petite Academy 1529 Mundys Mill Rd",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "000-circle-k-115-clifty-dr": {
+    "price": 1008000,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "000 Circle K 115 Clifty Dr",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "342-access-medical-center-301-s-mustang-rd": {
+    "price": 1575342,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "342 Access Medical Center 301 S Mustang Rd",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  },
+  "000-hotel-pad-site-5728-mccrimmon-pkwy": {
+    "price": 4000000,
+    "cap": null,
+    "first_seen": "2026-03-18",
+    "last_seen": "2026-03-18",
+    "address": "000 Hotel Pad Site 5728 McCrimmon Pkwy",
+    "city": "",
+    "state": "SC",
+    "url": "https://www.matthews.com/listings/?type=retail&state=SC&status=for-sale",
+    "source": "Matthews Real Estate"
+  }
+}
