@@ -2,37 +2,35 @@ name: RE Bot Daily Scan
 
 on:
   schedule:
-    # 6:00 AM EDT (Mar-Nov) = 10:00 UTC
-    # 6:00 AM EST (Nov-Mar) = 11:00 UTC
-    - cron: "0 10 * * *"
-    - cron: "0 11 * * *"
+    - cron: "0 10 * * *"   # 6am EDT (Mar-Nov)
+    - cron: "0 11 * * *"   # 6am EST (Nov-Mar)
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   run-re-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     permissions:
       contents: write
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install Python dependencies
-        run: pip install requests beautifulsoup4 playwright==1.44.0
+        run: |
+          pip install requests beautifulsoup4 playwright==1.44.0
 
-      - name: Install Playwright Chromium browser
-        run: python -m playwright install chromium --with-deps
+      - name: Install Playwright Chromium + system dependencies
+        run: |
+          python -m playwright install chromium
+          python -m playwright install-deps chromium
 
       - name: Run RE Bot scraper
         env:
