@@ -1,0 +1,51 @@
+name: RE Bot Daily Scan
+
+on:
+  schedule:
+    # 6:00 AM EDT (Mar-Nov) = 10:00 UTC
+    # 6:00 AM EST (Nov-Mar) = 11:00 UTC
+    - cron: "0 10 * * *"
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  run-re-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install requests beautifulsoup4 playwright==1.44.0
+
+      - name: Install Playwright Chromium browser
+        run: python -m playwright install chromium --with-deps
+
+      - name: Run RE Bot scraper
+        env:
+          GMAIL_USER:         ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          CREXI_EMAIL:        ${{ secrets.CREXI_EMAIL }}
+          CREXI_PASSWORD:     ${{ secrets.CREXI_PASSWORD }}
+        run: python scraper.py
+
+      - name: Commit updated files back to repo
+        run: |
+          git config user.name  "RE Bot"
+          git config user.email "re-bot@github-actions"
+          git add known_listings.json re_bot_29609.html
+          git diff --cached --quiet || git commit -m "RE Bot daily update — $(date +'%Y-%m-%d')"
+          git push
