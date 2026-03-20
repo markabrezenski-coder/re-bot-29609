@@ -10,7 +10,6 @@ jobs:
   run-re-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     permissions:
       contents: write
 
@@ -23,14 +22,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Python dependencies
-        run: pip install requests beautifulsoup4 playwright==1.44.0
-
-      - name: Install Playwright Chromium browser
-        run: python -m playwright install chromium
-
-      - name: Install Playwright system dependencies
-        run: python -m playwright install-deps chromium
+      - name: Install all dependencies and browsers
+        run: |
+          pip install requests beautifulsoup4 playwright==1.44.0
+          python -m playwright install chromium
+          python -m playwright install-deps chromium
+          echo "Playwright installed successfully"
+          python -c "from playwright.sync_api import sync_playwright; print('Playwright import OK')"
 
       - name: Run RE Bot scraper
         env:
