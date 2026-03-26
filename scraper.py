@@ -24,8 +24,18 @@ def ensure_playwright():
     subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright==1.44.0"])
     print("[boot] Installing Chromium browser...")
     subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
-    print("[boot] Installing Chromium system deps...")
-    subprocess.check_call([sys.executable, "-m", "playwright", "install-deps", "chromium"])
+    print("[boot] Installing Chromium system deps (Ubuntu 24 compatible)...")
+    # install-deps fails on Ubuntu 24 (libasound2 renamed to libasound2t64) — install manually
+    deps = [
+        "libnss3", "libnspr4", "libatk1.0-0", "libatk-bridge2.0-0",
+        "libcups2", "libdrm2", "libxkbcommon0", "libxcomposite1",
+        "libxdamage1", "libxfixes3", "libxrandr2", "libgbm1",
+        "libasound2t64", "libpango-1.0-0", "libcairo2",
+    ]
+    subprocess.check_call(
+        ["sudo", "apt-get", "install", "-y", "--no-install-recommends"] + deps,
+        env={**__import__("os").environ, "DEBIAN_FRONTEND": "noninteractive"}
+    )
     print("[boot] Playwright ready.")
 
 ensure_playwright()
