@@ -37,15 +37,15 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
 .right { text-align:right; } .center { text-align:center; }
 .btn-reject { background:transparent; color:#e74c3c; border:1px solid #e74c3c; border-radius:3px; cursor:pointer; padding:3px 8px; font-size:11px; }
 .btn-reject.on { background:#e74c3c; color:#fff; }
-.btn-remove{background:#8B0000;color:#fff;border:1px solid #cc0000;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:11px;font-weight:bold;margin-left:4px;opacity:.85}
-.btn-remove:hover{opacity:1;background:#cc0000}
-.remove-log-section{margin:12px 0 0;padding:10px 16px;background:#1a0a0a;border:1px solid #8B0000;border-radius:6px;font-size:12px}
-.remove-log-section h4{color:#cc4444;margin:0 0 8px;font-size:13px}
-.remove-log-entry{color:#ccc;margin:3px 0;font-family:monospace}
-.remove-log-entry .reason-tag{color:#ff8888}
-#exportRemovalsBtn{background:#5a1a1a;color:#ffaaaa;border:1px solid #8B0000;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;margin-top:8px}
-#exportRemovalsBtn:hover{background:#8B0000}
 .footer { text-align:center; color:#555; font-size:11px; margin-top:15px; }
+
+.btn-remove { background:#7a1a1a; color:#fff; border:none; border-radius:4px; padding:3px 7px; cursor:pointer; font-size:11px; font-weight:bold; margin-left:4px; }
+.btn-remove:hover { background:#a02020; }
+.rm-log { margin-top:20px; background:#1a1a1a; border:1px solid #444; border-radius:6px; padding:15px; max-width:1500px; margin-left:auto; margin-right:auto; }
+.rm-log h3 { color:#e74c3c; margin:0 0 10px 0; font-size:14px; }
+.rm-log table { width:100%; border-collapse:collapse; font-size:12px; }
+.rm-log th { color:#aaa; text-align:left; padding:4px 8px; border-bottom:1px solid #333; }
+.rm-log td { color:#ccc; padding:4px 8px; border-bottom:1px solid #222; }
 </style>
 </head>
 <body>
@@ -114,7 +114,6 @@ function loadFromCloud() {
       rec.listings.forEach(function(l) { if (!seen.has(l.id)) merged.push(l); });
       listings = merged;
     }
-    window.removals = rec.removals || {};
     if (rec.rejections) {
       rejections = rec.rejections;
       listings.forEach(function(l) { l.rejected = !!rejections[l.id]; });
@@ -134,7 +133,7 @@ function saveToCloud() {
   fetch(BIN_URL, {
     method: "PUT",
     headers: {"Content-Type": "application/json", "X-Master-Key": MASTER_KEY},
-    body: JSON.stringify({listings: listings, rejections: rejections, removals: window.removals||{}})
+    body: JSON.stringify({listings: listings, rejections: rejections})
   })
   .then(function() { document.getElementById("syncStatus").textContent = "Saved"; })
   .catch(function() { document.getElementById("syncStatus").textContent = "Save failed"; });
@@ -185,7 +184,7 @@ function render() {
     row += "<td class=\"right\">" + sqft + "</td>";
     row += "<td class=\"center\">" + traffic + "</td>";
     row += "<td>" + srcLink + omLink + "</td>";
-    row += "<td class=\"center\">" + rejBtn + "<button class=\"btn-remove\" onclick=\"removeListing('" + l.id + "')\" title=\"Remove from tracker\">RM</button></td>";
+    row += "<td class=\"center\">" + rejBtn + "</td>";
     row += "</tr>";
     tbody.innerHTML += row;
   });
@@ -277,53 +276,108 @@ function clearData() {
 loadFromCloud();
 
 
-// ── Remove (RM) functionality ─────────────────────────
-if (!window.removals) window.removals = {};
+// ===== RM BUTTON FEATURE =====
+const JSONBIN_ID = '69e6761936566621a8d35f2b';
+const JSONBIN_KEY = '$2a$10$K3s/cWxP703.kytHo0h48eu3/4ZC/Hy5TPH4iWgZfzRIcuM4YWUZi';
 
-function removeListing(id) {
-  var l = listings.find(function(x){return x.id===id;});
-  if (!l) return;
-  var name = l.address+', '+l.city+', '+l.state;
-  if (!window.confirm('Are you sure?\n\n"'+name+'" will be permanently removed from your list.')) return;
-  var reasons = ['Not a strip mall (condo/office unit)','Not a strip mall (single tenant)','Not a strip mall (mixed-use residential)','Outside price range','Outside distance range','Duplicate listing','Land only / not improved','Other'];
-  var choice = prompt('Reason for removal:\n\n'+reasons.map(function(r,i){return (i+1)+'. '+r;}).join('\n')+'\n\nEnter number or type reason:','1');
-  if (choice===null) return;
-  var n=parseInt(choice);
-  var reason=(n>=1&&n<=reasons.length)?reasons[n-1]:choice;
-  window.removals[id]={address:l.address,city:l.city,state:l.state,price:l.price,reason:reason,removed_at:new Date().toISOString(),source_platform:l.sourcePlatform||'',source_url:l.url||''};
-  listings=listings.filter(function(x){return x.id!==id;});
-  saveToCloud();
-  render(listings);
-  renderRemovalsLog();
+async function removeListing(id) {
+  const listing = listings.find(l => l.id === id);
+  if (!listing) return;
+  const addr = (listing.address || listing.name) + ', ' + listing.city + ', ' + listing.state;
+  if (!confirm('Are you sure? "' + addr + '" will be permanently removed from your list.')) return;
+
+  const reasons = [
+    'Not a strip mall (condo/office unit)',
+    'Not a strip mall (single tenant)',
+    'Not a strip mall (mixed-use residential)',
+    'Outside price range',
+    'Outside distance range',
+    'Duplicate listing',
+    'Land only / not improved',
+    'Other'
+  ];
+  const choice = prompt('Select removal reason (enter number):\n' + reasons.map((r,i) => (i+1)+'. '+r).join('\n'));
+  const idx = parseInt(choice) - 1;
+  let reason = '';
+  if (idx >= 0 && idx < reasons.length - 1) {
+    reason = reasons[idx];
+  } else if (idx === reasons.length - 1) {
+    reason = prompt('Enter your reason:') || 'Other';
+  } else { return; }
+
+  listings = listings.filter(l => l.id !== id);
+
+  try {
+    const resp = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const data = await resp.json();
+    const record = data.record || {};
+    if (!record.removals) record.removals = {};
+    record.removals[id] = { id, address: listing.address || listing.name, city: listing.city, state: listing.state, reason, removedAt: new Date().toISOString() };
+    record.listings = listings;
+    await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+      body: JSON.stringify(record)
+    });
+  } catch(e) { console.error('Cloud save failed', e); }
+
+  render();
+  setTimeout(renderRemovalsLog, 300);
+  alert('Removed: ' + addr + '\nReason: ' + reason);
 }
 
-function exportRemovals() {
-  var blob=new Blob([JSON.stringify(window.removals,null,2)],{type:'application/json'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='removal_log_'+new Date().toISOString().substring(0,10)+'.json';
-  a.click();
-}
-
-function renderRemovalsLog() {
-  var ex=document.getElementById('removalsLog');
-  if(ex)ex.remove();
-  var keys=Object.keys(window.removals||{});
-  if(!keys.length)return;
-  var sec=document.createElement('div');
-  sec.id='removalsLog';
-  sec.className='remove-log-section';
-  var h='<h4>&#128465; Removal Log ('+keys.length+') &mdash; scraper filter training data</h4>';
-  keys.forEach(function(id){
-    var r=window.removals[id];
-    h+='<div class="remove-log-entry"><span style="color:#888">'+(r.removed_at||'').substring(0,10)+'</span> <strong style="color:#eee">'+(r.address||id)+', '+(r.city||'')+' '+(r.state||'')+'</strong> &mdash; <span class="reason-tag">'+(r.reason||'')+'</span></div>';
+function addRemoveButtons() {
+  document.querySelectorAll('tbody tr').forEach(row => {
+    if (row.querySelector('.btn-remove')) return;
+    const rejectBtn = row.querySelector('.btn-reject, .btn-rejected, button[onclick*="toggleReject"]');
+    if (!rejectBtn) return;
+    const onclickStr = rejectBtn.getAttribute('onclick') || '';
+    const match = onclickStr.match(/toggleReject\('([^']+)'\)/);
+    if (!match) return;
+    const id = match[1];
+    const lastTd = row.querySelector('td:last-child');
+    if (!lastTd) return;
+    const btn = document.createElement('button');
+    btn.className = 'btn-remove';
+    btn.textContent = 'RM';
+    btn.onclick = () => removeListing(id);
+    lastTd.appendChild(btn);
   });
-  h+='<button id="exportRemovalsBtn" onclick="exportRemovals()">Export Removal Log (JSON)</button>';
-  sec.innerHTML=h;
-  var tbl=document.querySelector('table');
-  if(tbl&&tbl.parentNode)tbl.parentNode.insertBefore(sec,tbl.nextSibling);
-  else document.body.appendChild(sec);
 }
+
+async function renderRemovalsLog() {
+  const existing = document.getElementById('removals-log-section');
+  if (existing) existing.remove();
+  try {
+    const resp = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_ID + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const data = await resp.json();
+    const removals = data.record && data.record.removals ? data.record.removals : {};
+    const keys = Object.keys(removals);
+    if (keys.length === 0) return;
+    const section = document.createElement('div');
+    section.id = 'removals-log-section';
+    section.className = 'rm-log';
+    section.innerHTML = '<h3>Removal Log (' + keys.length + ' — used to filter future searches)</h3><table><tr><th>Address</th><th>City</th><th>State</th><th>Reason</th><th>Removed</th></tr>' +
+      keys.map(k => { const r = removals[k]; return '<tr><td>'+(r.address||k)+'</td><td>'+(r.city||'')+'</td><td>'+(r.state||'')+'</td><td>'+(r.reason||'')+'</td><td>'+(r.removedAt?r.removedAt.substring(0,10):'')+'</td></tr>'; }).join('') + '</table>';
+    document.body.appendChild(section);
+  } catch(e) { console.error('Failed to load removals log', e); }
+}
+
+// Patch render to add RM buttons after each render
+const _baseRender = render;
+function render() {
+  _baseRender();
+  setTimeout(addRemoveButtons, 50);
+}
+
+// Init
+render();
+setTimeout(renderRemovalsLog, 800);
+// ===== END RM BUTTON FEATURE =====
 
 </script>
 </body>
