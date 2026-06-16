@@ -38,10 +38,9 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
 .right { text-align:right; } .center { text-align:center; }
 .btn-reject { background:transparent; color:#e74c3c; border:1px solid #e74c3c; border-radius:3px; cursor:pointer; padding:3px 8px; font-size:11px; }
 .btn-reject.on { background:#e74c3c; color:#fff; }
+.footer { text-align:center; color:#555; font-size:11px; margin-top:15px; }
 .btn-rm { background:transparent; color:#c0392b; border:1px solid #c0392b; border-radius:3px; cursor:pointer; padding:3px 8px; font-size:11px; }
 .btn-rm:hover { background:#c0392b; color:#fff; }
-.footer { text-align:center; color:#555; font-size:11px; margin-top:15px; }
-/* RM Modal */
 #rmOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; }
 #rmOverlay.open { display:flex; }
 #rmModal { background:#1e1e1e; border:1px solid #444; border-radius:8px; padding:28px 32px; width:420px; max-width:90vw; color:#e0e0e0; }
@@ -71,13 +70,11 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
   <div id="rmModal">
     <h3>Remove listing?</h3>
     <div class="rm-address" id="rmAddress"></div>
-
-    <!-- Step 1: choose reason category -->
     <div id="rmStep1">
       <div class="rm-choices">
         <div class="rm-choice" id="choiceCriteria" onclick="rmSelectChoice('criteria')">
           <b>Didn't meet model criteria</b><br>
-          <span style="font-size:11px;color:#aaa;">This listing shouldn't have been surfaced — help improve the tool</span>
+          <span style="font-size:11px;color:#aaa;">This listing shouldn't have been surfaced &mdash; help improve the tool</span>
         </div>
         <div class="rm-choice" id="choiceInterest" onclick="rmSelectChoice('interest')">
           <b>Not interested</b><br>
@@ -85,32 +82,27 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
         </div>
       </div>
     </div>
-
-    <!-- Step 2a: criteria sub-form -->
     <div id="rmSubCriteria" class="rm-sub" style="display:none;">
       <label>Why was this scraped incorrectly?</label>
       <select id="rmCriteriaReason">
-        <option value="">— select a reason —</option>
-        <option value="Not a strip mall (condo/office unit)">Not a strip mall — condo / office unit / suite</option>
-        <option value="Not a strip mall (single tenant)">Not a strip mall — single tenant NNN</option>
-        <option value="Not a strip mall (mixed-use residential)">Not a strip mall — mixed-use residential</option>
-        <option value="Outside price range">Outside price range ($1M–$5M)</option>
+        <option value="">&#8212; select a reason &#8212;</option>
+        <option value="Not a strip mall (condo/office unit)">Not a strip mall &mdash; condo / office unit / suite</option>
+        <option value="Not a strip mall (single tenant)">Not a strip mall &mdash; single tenant NNN</option>
+        <option value="Not a strip mall (mixed-use residential)">Not a strip mall &mdash; mixed-use residential</option>
+        <option value="Outside price range">Outside price range ($1M&ndash;$5M)</option>
         <option value="Outside distance range">Outside distance range (200 mi)</option>
         <option value="Wrong property type">Wrong property type (industrial / warehouse / land / etc)</option>
         <option value="Listing expired / no longer available">Listing expired / no longer available</option>
         <option value="Duplicate listing">Duplicate listing</option>
-        <option value="Other criteria issue">Other — describe below</option>
+        <option value="Other criteria issue">Other &mdash; describe below</option>
       </select>
       <label>Additional notes for the scraper (optional)</label>
-      <textarea id="rmCriteriaNotes" placeholder="e.g. &quot;This platform always lists office suites as retail strips — filter by building type&quot;"></textarea>
+      <textarea id="rmCriteriaNotes" placeholder="e.g. This platform always lists office suites as retail strips"></textarea>
     </div>
-
-    <!-- Step 2b: not-interested sub-form -->
     <div id="rmSubInterest" class="rm-sub" style="display:none;">
       <label>Notes for yourself (optional)</label>
-      <textarea id="rmInterestNotes" placeholder="e.g. &quot;Too close to the highway, bad ingress&quot;"></textarea>
+      <textarea id="rmInterestNotes" placeholder="e.g. Too close to the highway, bad ingress"></textarea>
     </div>
-
     <div class="rm-actions">
       <button class="rm-cancel" onclick="rmClose()">Cancel</button>
       <button class="rm-confirm" id="rmConfirmBtn" onclick="rmConfirm()" disabled>Remove</button>
@@ -245,4 +237,181 @@ function render() {
     var mapUrl = "https://www.google.com/maps/search/" + encodeURIComponent(addr + ", " + (l.city || "") + ", " + (l.state || ""));
     var srcLink = l.url ? "<a href=\"" + l.url + "\" target=\"_blank\">" + (l.sourcePlatform || "Source") + "</a>" : "--";
     var omLink = l.omUrl ? " &middot; <a href=\"" + l.omUrl + "\" target=\"_blank\">OM</a>" : "";
-    var note = l.verifiedNote ? "<br><span class=\"sub\">" + l.verifiedNote + "</
+    var note = l.verifiedNote ? "<br><span class=\"sub\">" + l.verifiedNote + "</span>" : "";
+    var rejCls = "btn-reject" + (l.rejected ? " on" : "");
+    var rejLbl = l.rejected ? "Rejected" : "X";
+    var rejBtn = "<button class=\"" + rejCls + "\" onclick=\"toggleReject('" + l.id + "')\">"+rejLbl+"</button>";
+    var row = "<tr class=\"" + cls + "\">";
+    row += "<td><a href=\"" + mapUrl + "\" target=\"_blank\">" + addr + "</a>" + badge + "<br><span class=\"sub\">" + (l.city||"") + ", " + (l.state||"") + "</span>" + note + "</td>";
+    row += "<td class=\"center\">" + (l.dist != null ? l.dist + " mi" : "?") + "</td>";
+    row += "<td class=\"right\">" + price + "</td>";
+    row += "<td class=\"center\">" + cap + "</td>";
+    row += "<td class=\"right\">" + noi + "</td>";
+    row += "<td class=\"right\">" + nnn + "</td>";
+    row += "<td class=\"center\">" + occ + "</td>";
+    row += "<td class=\"right\">" + sqft + "</td>";
+    row += "<td class=\"center\">" + traffic + "</td>";
+    row += "<td>" + srcLink + omLink + "</td>";
+    row += "<td class=\"center\">" + rejBtn + "</td>";
+    row += "<td class=\"center\"><button class=\"btn-rm\" onclick=\"removeListing('" + l.id + "')\" title=\"Remove listing permanently\">RM</button></td>";
+    row += "</tr>";
+    tbody.innerHTML += row;
+  });
+  var avgCap = capCount > 0 ? (totalCap / capCount).toFixed(2) : "--";
+  var nc = listings.filter(function(l) { return l.isNew; }).length;
+  var nt = listings.filter(function(l) { return !l.aadt; }).length;
+  document.getElementById("statsBar").innerHTML =
+    "<span class=\"stat\"><b>" + listings.length + "</b> listings</span>" +
+    "<span class=\"stat\"><b>" + avgCap + "%</b> avg CAP</span>" +
+    "<span class=\"stat\"><b>" + nc + "</b> new</span>" +
+    "<span class=\"stat\"><b>" + nt + "</b> missing traffic</span>";
+}
+
+function toggleReject(id) {
+  var idx = listings.findIndex(function(l) { return l.id === id; });
+  if (idx >= 0) {
+    listings[idx].rejected = !listings[idx].rejected;
+    if (listings[idx].rejected) { rejections[id] = true; } else { delete rejections[id]; }
+    saveToCloud();
+    render();
+  }
+}
+
+var _rmTargetId = null;
+var _rmChoice = null;
+
+function removeListing(id) {
+  var idx = listings.findIndex(function(l) { return l.id === id; });
+  if (idx < 0) return;
+  var l = listings[idx];
+  _rmTargetId = id;
+  _rmChoice = null;
+  document.getElementById("rmAddress").textContent = (l.address || l.name || id) + (l.city ? ", " + l.city : "") + (l.state ? " " + l.state : "");
+  document.getElementById("choiceCriteria").classList.remove("selected");
+  document.getElementById("choiceInterest").classList.remove("selected");
+  document.getElementById("rmSubCriteria").style.display = "none";
+  document.getElementById("rmSubInterest").style.display = "none";
+  document.getElementById("rmCriteriaReason").value = "";
+  document.getElementById("rmCriteriaNotes").value = "";
+  document.getElementById("rmInterestNotes").value = "";
+  document.getElementById("rmConfirmBtn").disabled = true;
+  document.getElementById("rmOverlay").classList.add("open");
+}
+
+function rmSelectChoice(choice) {
+  _rmChoice = choice;
+  document.getElementById("choiceCriteria").classList.toggle("selected", choice === "criteria");
+  document.getElementById("choiceInterest").classList.toggle("selected", choice === "interest");
+  document.getElementById("rmSubCriteria").style.display = choice === "criteria" ? "block" : "none";
+  document.getElementById("rmSubInterest").style.display = choice === "interest" ? "block" : "none";
+  document.getElementById("rmConfirmBtn").disabled = false;
+}
+
+function rmClose() {
+  _rmTargetId = null;
+  _rmChoice = null;
+  document.getElementById("rmOverlay").classList.remove("open");
+}
+
+function rmConfirm() {
+  if (!_rmTargetId || !_rmChoice) return;
+  var idx = listings.findIndex(function(l) { return l.id === _rmTargetId; });
+  if (idx < 0) { rmClose(); return; }
+  var l = listings[idx];
+  var reason, notes;
+  if (_rmChoice === "criteria") {
+    reason = document.getElementById("rmCriteriaReason").value || "Didn't meet model criteria";
+    notes = document.getElementById("rmCriteriaNotes").value.trim();
+  } else {
+    reason = "Not interested";
+    notes = document.getElementById("rmInterestNotes").value.trim();
+  }
+  removals[_rmTargetId] = {
+    address: l.address || l.name || _rmTargetId,
+    city: l.city || "",
+    state: l.state || "",
+    price: l.price || null,
+    category: _rmChoice,
+    reason: reason,
+    notes: notes,
+    removed_at: new Date().toISOString(),
+    source_platform: l.sourcePlatform || "",
+    source_url: l.url || ""
+  };
+  listings.splice(idx, 1);
+  delete rejections[_rmTargetId];
+  rmClose();
+  saveToCloud();
+  render();
+}
+
+function togglePaste() {
+  var a = document.getElementById("pasteArea");
+  a.style.display = a.style.display === "none" ? "block" : "none";
+}
+
+function loadJSON() {
+  var text = document.getElementById("jsonInput").value.trim();
+  var status = document.getElementById("loadStatus");
+  try {
+    var nd = JSON.parse(text);
+    if (!Array.isArray(nd)) { status.textContent = "Error: not an array"; return; }
+    var added = 0, updated = 0, removed = 0;
+    nd.forEach(function(item) {
+      var id = item.id || (item.address + "-" + item.city).toLowerCase().replace(/\s+/g, "-");
+      var idx = listings.findIndex(function(l) { return l.id === id; });
+      if (item.remove === true) {
+        if (idx >= 0) { listings.splice(idx, 1); removed++; }
+      } else if (idx >= 0) {
+        Object.keys(item).forEach(function(k) { if (item[k] != null) listings[idx][k] = item[k]; });
+        updated++;
+      } else {
+        item.id = id; item.isNew = true; listings.push(item); added++;
+      }
+    });
+    saveToCloud();
+    var msg = added + " new, " + updated + " updated";
+    if (removed > 0) msg += ", " + removed + " removed";
+    status.textContent = msg;
+    document.getElementById("jsonInput").value = "";
+    render();
+  } catch(e) {
+    status.textContent = "Parse error: " + e.message;
+  }
+}
+
+function copyTable() {
+  var h = "Property\tCity\tState\tDist\tPrice\tCAP\tNOI\tNNN\tOcc\tSqft\tTraffic\tSource\tBroker\tNotes\n";
+  var rows = listings.map(function(l) {
+    var noi = (l.capRate && l.price) ? Math.round(l.price * l.capRate / 100) : "";
+    return [l.address||"",l.city||"",l.state||"",l.dist||"",l.price||"",l.capRate||"",noi,l.nnn||"",l.occ||"",l.sqft||"",l.aadt||"",l.url||"",l.broker||"",l.verifiedNote||""].join("\t");
+  }).join("\n");
+  navigator.clipboard.writeText(h + rows).then(function() { alert("Copied " + listings.length + " listings!"); });
+}
+
+function exportCSV() {
+  var f = function(v) { return '"' + (v||"").toString().replace(/"/g, '""') + '"'; };
+  var h = "Property,City,State,Dist,Price,CAP,NOI,NNN,Occ,Sqft,Traffic,Road,Source,OM,Broker,Notes\n";
+  var rows = listings.map(function(l) {
+    var noi = (l.capRate && l.price) ? Math.round(l.price * l.capRate / 100) : "";
+    return f(l.address)+","+f(l.city)+","+f(l.state)+","+(l.dist||"")+","+(l.price||"")+","+(l.capRate||"")+","+noi+","+(l.nnn||"")+","+(l.occ||"")+","+(l.sqft||"")+","+(l.aadt||"")+","+f(l.aadtRoad)+","+f(l.url)+","+f(l.omUrl)+","+f(l.broker)+","+f(l.verifiedNote);
+  }).join("\n");
+  var b = new Blob([h+rows], {type:"text/csv"});
+  var a = document.createElement("a"); a.href = URL.createObjectURL(b);
+  a.download = "re_bot_" + new Date().toISOString().slice(0,10) + ".csv"; a.click();
+}
+
+function clearData() {
+  if (confirm("Reset to original " + INITIAL.length + " listings?")) {
+    listings = JSON.parse(JSON.stringify(INITIAL));
+    rejections = {};
+    saveToCloud();
+    render();
+  }
+}
+
+loadFromCloud();
+
+</script>
+</body>
+</html>
