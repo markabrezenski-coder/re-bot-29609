@@ -257,21 +257,4 @@ function exportCSV() {
     return f(l.address)+","+f(l.city)+","+f(l.state)+","+(l.dist||"")+","+(l.price||"")+","+(l.capRate||"")+","+noi+","+(l.nnn||"")+","+(l.occ||"")+","+(l.sqft||"")+","+(l.aadt||"")+","+f(l.aadtRoad)+","+f(l.url)+","+f(l.omUrl)+","+f(l.broker)+","+f(l.verifiedNote);
   }).join("\n");
   var b = new Blob([h+rows], {type:"text/csv"});
-  var a = document.createElement("a"); a.href = URL.createObjectURL(b);
-  a.download = "re_bot_" + new Date().toISOString().slice(0,10) + ".csv"; a.click();
-}
-
-function clearData() {
-  if (confirm("Reset to original " + INITIAL.length + " listings?")) {
-    listings = JSON.parse(JSON.stringify(INITIAL));
-    rejections = {};
-    saveToCloud();
-    render();
-  }
-}
-
-loadFromCloud();
-
-</script>
-</body>
-</html>
+  
