@@ -41,9 +41,83 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
 .btn-rm { background:transparent; color:#c0392b; border:1px solid #c0392b; border-radius:3px; cursor:pointer; padding:3px 8px; font-size:11px; }
 .btn-rm:hover { background:#c0392b; color:#fff; }
 .footer { text-align:center; color:#555; font-size:11px; margin-top:15px; }
+/* RM Modal */
+#rmOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; }
+#rmOverlay.open { display:flex; }
+#rmModal { background:#1e1e1e; border:1px solid #444; border-radius:8px; padding:28px 32px; width:420px; max-width:90vw; color:#e0e0e0; }
+#rmModal h3 { margin:0 0 6px; font-size:15px; color:#fff; }
+#rmModal .rm-address { font-size:12px; color:#aaa; margin-bottom:20px; }
+#rmModal .rm-choices { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+#rmModal .rm-choice { background:#2a2a2a; border:1px solid #555; border-radius:6px; padding:12px 16px; cursor:pointer; font-size:13px; transition:border-color 0.15s; }
+#rmModal .rm-choice:hover { border-color:#d4a017; color:#d4a017; }
+#rmModal .rm-choice.selected { border-color:#d4a017; background:#2f2a18; color:#d4a017; }
+#rmModal .rm-sub { margin-top:0; }
+#rmModal label { display:block; font-size:12px; color:#aaa; margin-bottom:6px; }
+#rmModal select, #rmModal textarea { width:100%; background:#111; color:#e0e0e0; border:1px solid #444; border-radius:4px; padding:8px; font-size:12px; box-sizing:border-box; }
+#rmModal select { margin-bottom:12px; }
+#rmModal textarea { height:80px; resize:vertical; }
+#rmModal .rm-actions { display:flex; gap:10px; margin-top:18px; justify-content:flex-end; }
+#rmModal .rm-cancel { background:transparent; color:#aaa; border:1px solid #555; border-radius:4px; padding:8px 18px; cursor:pointer; font-size:13px; }
+#rmModal .rm-cancel:hover { color:#fff; border-color:#888; }
+#rmModal .rm-confirm { background:#c0392b; color:#fff; border:none; border-radius:4px; padding:8px 18px; cursor:pointer; font-size:13px; font-weight:bold; }
+#rmModal .rm-confirm:hover { background:#e74c3c; }
+#rmModal .rm-confirm:disabled { background:#555; cursor:default; }
 </style>
 </head>
 <body>
+
+<!-- RM Removal Modal -->
+<div id="rmOverlay">
+  <div id="rmModal">
+    <h3>Remove listing?</h3>
+    <div class="rm-address" id="rmAddress"></div>
+
+    <!-- Step 1: choose reason category -->
+    <div id="rmStep1">
+      <div class="rm-choices">
+        <div class="rm-choice" id="choiceCriteria" onclick="rmSelectChoice('criteria')">
+          <b>Didn't meet model criteria</b><br>
+          <span style="font-size:11px;color:#aaa;">This listing shouldn't have been surfaced — help improve the tool</span>
+        </div>
+        <div class="rm-choice" id="choiceInterest" onclick="rmSelectChoice('interest')">
+          <b>Not interested</b><br>
+          <span style="font-size:11px;color:#aaa;">Meets criteria but I'm passing on this one</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2a: criteria sub-form -->
+    <div id="rmSubCriteria" class="rm-sub" style="display:none;">
+      <label>Why was this scraped incorrectly?</label>
+      <select id="rmCriteriaReason">
+        <option value="">— select a reason —</option>
+        <option value="Not a strip mall (condo/office unit)">Not a strip mall — condo / office unit / suite</option>
+        <option value="Not a strip mall (single tenant)">Not a strip mall — single tenant NNN</option>
+        <option value="Not a strip mall (mixed-use residential)">Not a strip mall — mixed-use residential</option>
+        <option value="Outside price range">Outside price range ($1M–$5M)</option>
+        <option value="Outside distance range">Outside distance range (200 mi)</option>
+        <option value="Wrong property type">Wrong property type (industrial / warehouse / land / etc)</option>
+        <option value="Listing expired / no longer available">Listing expired / no longer available</option>
+        <option value="Duplicate listing">Duplicate listing</option>
+        <option value="Other criteria issue">Other — describe below</option>
+      </select>
+      <label>Additional notes for the scraper (optional)</label>
+      <textarea id="rmCriteriaNotes" placeholder="e.g. &quot;This platform always lists office suites as retail strips — filter by building type&quot;"></textarea>
+    </div>
+
+    <!-- Step 2b: not-interested sub-form -->
+    <div id="rmSubInterest" class="rm-sub" style="display:none;">
+      <label>Notes for yourself (optional)</label>
+      <textarea id="rmInterestNotes" placeholder="e.g. &quot;Too close to the highway, bad ingress&quot;"></textarea>
+    </div>
+
+    <div class="rm-actions">
+      <button class="rm-cancel" onclick="rmClose()">Cancel</button>
+      <button class="rm-confirm" id="rmConfirmBtn" onclick="rmConfirm()" disabled>Remove</button>
+    </div>
+  </div>
+</div>
+
 <div class="header">
   <h1>RE Bot &mdash; Strip Mall Tracker &middot; 29609</h1>
   <p>$1M&ndash;$5M &middot; 200mi &middot; SC/NC/GA/TN &middot; Click column headers to sort</p>
@@ -91,6 +165,7 @@ var BIN_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID;
 var INITIAL = [{"id": "easley-community-center-easley", "name": "Easley Community Center", "address": "6606 Calhoun Memorial Hwy", "city": "Easley", "state": "SC", "dist": 18, "price": 2900000, "sqft": 13811, "capRate": 6.46, "nnn": 13.56, "nnnEst": true, "occ": 100, "aadt": 36400, "aadtRoad": "Highway 123 Corridor", "url": "https://www.loopnet.com/Listing/Easley-Community-Center/35396988/", "omUrl": "https://images1.loopnet.com/d2/38QEqGFYJ2bXdPd8mgiBGJZaThENLadIGRq2HRCcl18/For%20Sale%20Flyer%20Easley%20Community%20Center.pdf", "broker": "Trent Johnson, The Burgess Company", "verifiedNote": "2 buildings, 7 tenants, 100% occ, 36,400 VPD", "firstSeen": "2026-03-16", "isNew": false}, {"id": "chulio-commons-euharlee", "name": "Chulio Commons", "address": "12 Euharlee Rd SW", "city": "Euharlee", "state": "GA", "dist": 88, "price": 2200000, "sqft": 12100, "capRate": 7.85, "nnn": 14.27, "nnnEst": true, "occ": 100, "aadt": null, "aadtRoad": null, "url": "https://www.loopnet.com/Listing/12-Euharlee-Rd-SW-Euharlee-GA/37443389/", "omUrl": null, "broker": "Hunter Horton", "verifiedNote": "100% leased, Class C, built 2000", "firstSeen": "2026-03-16", "isNew": false}, {"id": "2720-e-main-spartanburg", "name": "2720-2724 E Main St", "address": "2720-2724 E Main St", "city": "Spartanburg", "state": "SC", "dist": 26, "price": 1168500, "sqft": 10543, "capRate": 8.1, "nnn": 8.97, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/2720-2724-e-main-st-spartanburg-sc-29307/cs39533806", "omUrl": null, "broker": "", "verifiedNote": "8.10% CAP", "firstSeen": "2026-03-16", "isNew": false}, {"id": "200-spartanburg-hwy-lyman", "name": "200 Spartanburg Hwy", "address": "200 Spartanburg Hwy", "city": "Lyman", "state": "SC", "dist": 22, "price": 3300000, "sqft": 32000, "capRate": null, "nnn": null, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/200-spartanburg-hwy-lyman-sc-29365/cs38500747", "omUrl": null, "broker": "Ellice Niedrach", "verifiedNote": "32,000 SF", "firstSeen": "2026-03-16", "isNew": false}, {"id": "1206-union-spartanburg", "name": "1206-1214 Union St", "address": "1206-1214 Union St", "city": "Spartanburg", "state": "SC", "dist": 28, "price": 2800000, "sqft": 26000, "capRate": null, "nnn": null, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/1206-1214-union-st-spartanburg-sc-29302/cs38116436", "omUrl": null, "broker": "Carl Hocker", "verifiedNote": "26,000 SF, built 1960", "firstSeen": "2026-03-16", "isNew": false}, {"id": "102-metro-spartanburg", "name": "102-114 Metro Dr", "address": "102-114 Metro Dr", "city": "Spartanburg", "state": "SC", "dist": 28, "price": 949900, "sqft": 7500, "capRate": null, "nnn": null, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/102-114-metro-dr-spartanburg-sc-29303/cs35622312", "omUrl": null, "broker": "Kathy Klochko", "verifiedNote": "7,500 SF, built 1977", "firstSeen": "2026-03-27", "isNew": false}, {"id": "anderson-1100000", "name": "1475 Pearman Dairy Rd", "address": "1475 Pearman Dairy Rd", "city": "Anderson", "state": "SC", "dist": 32, "price": 1100000, "sqft": 9600, "capRate": 7.95, "nnn": 9.11, "nnnEst": true, "occ": null, "aadt": 23200, "aadtRoad": "Pearman Dairy Rd", "url": "https://www.loopnet.com/Listing/1475-Pearman-Dairy-Rd-N-Anderson-SC/31004746/", "omUrl": null, "broker": "Spencer Hines Properties", "verifiedNote": "7.95% CAP, 23,200 VPD", "firstSeen": "2026-03-27", "isNew": false, "sourcePlatform": "LoopNet"}, {"id": "1269-tunnel-asheville", "name": "1269 Tunnel Rd", "address": "1269 Tunnel Rd", "city": "Asheville", "state": "NC", "dist": 65, "price": 1600000, "sqft": 6300, "capRate": 7.5, "nnn": 19.05, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/1269-tunnel-rd-asheville-nc-28805/cs39709383", "omUrl": null, "broker": "Keoki Kimzin", "verifiedNote": "7.50% CAP, 6,300 SF", "firstSeen": "2026-03-16", "isNew": false}, {"id": "4886-sunset-lexington", "name": "4886 Sunset Blvd", "address": "4886 Sunset Blvd", "city": "Lexington", "state": "SC", "dist": 95, "price": 2300000, "sqft": 15500, "capRate": 6.93, "nnn": 10.3, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/4886-sunset-blvd-lexington-sc-29072/cs39087768", "omUrl": null, "broker": "Lasha Kortava", "verifiedNote": "6.93% CAP, 15,500 SF", "firstSeen": "2026-03-16", "isNew": false}, {"id": "1620-roosevelt-monroe", "name": "1620 E Roosevelt Blvd", "address": "1620 E Roosevelt Blvd", "city": "Monroe", "state": "NC", "dist": 100, "price": 5000000, "sqft": 45080, "capRate": 7.27, "nnn": 8.06, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/1620-e-roosevelt-blvd-monroe-nc-28112/cs39710650", "omUrl": null, "broker": "Devon Dykstra, David Webb", "verifiedNote": "7.27% CAP, 45,080 SF", "firstSeen": "2026-03-16", "isNew": false}, {"id": "2205-decker-columbia", "name": "2205 Decker Blvd", "address": "2205 Decker Blvd", "city": "Columbia", "state": "SC", "dist": 100, "price": 1750000, "sqft": 11880, "capRate": null, "nnn": null, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/2205-decker-blvd-columbia-sc-29206/cs39012713", "omUrl": "https://images1.cityfeet.com/d2/1KZetF7C1Y_vuqaJL2ZfSJkQxCfeQt1BqK8aTXEFd8Q/document.pdf", "broker": "Samuel Gamble, John Mills", "verifiedNote": "11,880 SF, OM available", "firstSeen": "2026-03-16", "isNew": false}, {"id": "814-highway1-lugoff", "name": "814 S Highway 1", "address": "814 S Highway 1", "city": "Lugoff", "state": "SC", "dist": 110, "price": 3250000, "sqft": 54625, "capRate": null, "nnn": null, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/814-s-highway-1-lugoff-sc-29078/cs38404174", "omUrl": null, "broker": "Brooks Owings, Haskell Kibler", "verifiedNote": "54,625 SF, food court", "firstSeen": "2026-03-16", "isNew": false}, {"id": "1125-eastchester-highpoint", "name": "1125 Eastchester Dr", "address": "1125 Eastchester Dr", "city": "High Point", "state": "NC", "dist": 115, "price": 1200000, "sqft": 4900, "capRate": null, "nnn": null, "nnnEst": true, "occ": 100, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/1125-eastchester-dr-high-point-nc-27265/cs39662762", "omUrl": null, "broker": "Austin Hill", "verifiedNote": "Fully leased, 4,900 SF", "firstSeen": "2026-03-16", "isNew": false}, {"id": "1205-hwy301-dillon", "name": "1205 Hwy 301 N", "address": "1205 Hwy 301 N", "city": "Dillon", "state": "SC", "dist": 140, "price": 1690000, "sqft": 9260, "capRate": 7.31, "nnn": 13.33, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.loopnet.com/Listing/1205-Hwy-301-N-Dillon-SC/37598156/", "omUrl": null, "broker": "", "verifiedNote": "7.31% CAP, 9,260 SF", "firstSeen": "2026-03-31", "isNew": true, "sourcePlatform": "LoopNet"}, {"id": "1923-2nd-loop-florence", "name": "1923-1945 2nd Loop Rd", "address": "1923-1945 2nd Loop Rd", "city": "Florence", "state": "SC", "dist": 145, "price": 3370000, "sqft": 28879, "capRate": 8.5, "nnn": 9.9, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/1923-1945-2nd-loop-rd-florence-sc-29501/cs33567725", "omUrl": null, "broker": "Michael Berk, Jarrett Slear", "verifiedNote": "8.50% CAP, 28,879 SF", "firstSeen": "2026-03-31", "isNew": true}, {"id": "5456-fayetteville-atlanta", "name": "5456 W Fayetteville Rd", "address": "5456 W Fayetteville Rd", "city": "Atlanta", "state": "GA", "dist": 150, "price": 3775000, "sqft": 19435, "capRate": 7.01, "nnn": 13.6, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/5456-w-fayetteville-rd-atlanta-ga/cs39399966", "omUrl": null, "broker": "Lasha Kortava, Andrew Ackerman", "verifiedNote": "7.01% CAP, 19,435 SF", "firstSeen": "2026-03-17", "isNew": false}, {"id": "11730-jones-bridge-johns-creek", "name": "11730 Jones Bridge Rd", "address": "11730 Jones Bridge Rd", "city": "Johns Creek", "state": "GA", "dist": 165, "price": 3700000, "sqft": 10220, "capRate": 4.61, "nnn": 16.66, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/11730-jones-bridge-rd-johns-creek-ga-30005/cs39399966", "omUrl": null, "broker": "Angela Cooper", "verifiedNote": "Price dropped from $3,999,999", "firstSeen": "2026-03-16", "isNew": false}, {"id": "820-parris-beaufort", "name": "820 Parris Island Gtwy", "address": "820 Parris Island Gtwy", "city": "Beaufort", "state": "SC", "dist": 170, "price": 1890000, "sqft": 7524, "capRate": 6.35, "nnn": 15.93, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": "Parris Island Gtwy (US-21)", "url": "https://www.cityfeet.com/cont/listing/820-parris-island-gtwy-beaufort-sc-29906/cs39656738", "omUrl": null, "broker": "Sterling Ingram", "verifiedNote": "6.35% CAP, 7,524 SF", "firstSeen": "2026-03-16", "isNew": false}, {"id": "28024-us76-clinton", "name": "28024-28032 US-76 Hwy", "address": "28024-28032 Us-76 Hwy", "city": "Clinton", "state": "SC", "dist": 50, "price": 2500000, "sqft": 49300, "capRate": null, "nnn": null, "nnnEst": true, "occ": null, "aadt": null, "aadtRoad": null, "url": "https://www.cityfeet.com/cont/listing/28024-28032-us-76-hwy-clinton-sc-29325/cs35993895", "omUrl": null, "broker": "Bradley Toy CCIM, Grant Chapman", "verifiedNote": "49,300 SF storefront", "firstSeen": "2026-03-27", "isNew": false}];
 var listings = JSON.parse(JSON.stringify(INITIAL));
 var rejections = {};
+var removals = {};
 var sortCol = "dist", sortDir = 1;
 
 function loadFromCloud() {
@@ -115,6 +190,7 @@ function loadFromCloud() {
       rejections = rec.rejections;
       listings.forEach(function(l) { l.rejected = !!rejections[l.id]; });
     }
+    if (rec.removals) { removals = rec.removals; }
     document.getElementById("syncStatus").textContent = "Synced (" + listings.length + ")";
     var ts = rec.lastUpdated ? new Date(rec.lastUpdated).toLocaleString() : null;
     var tsEl = document.getElementById("lastUpdated");
@@ -133,7 +209,7 @@ function saveToCloud() {
   fetch(BIN_URL, {
     method: "PUT",
     headers: {"Content-Type": "application/json", "X-Master-Key": MASTER_KEY},
-    body: JSON.stringify({listings: listings, rejections: rejections, lastUpdated: new Date().toISOString()})
+    body: JSON.stringify({listings: listings, rejections: rejections, removals: removals, lastUpdated: new Date().toISOString()})
   })
   .then(function() { document.getElementById("syncStatus").textContent = "Saved"; })
   .catch(function() { document.getElementById("syncStatus").textContent = "Save failed"; });
@@ -169,104 +245,4 @@ function render() {
     var mapUrl = "https://www.google.com/maps/search/" + encodeURIComponent(addr + ", " + (l.city || "") + ", " + (l.state || ""));
     var srcLink = l.url ? "<a href=\"" + l.url + "\" target=\"_blank\">" + (l.sourcePlatform || "Source") + "</a>" : "--";
     var omLink = l.omUrl ? " &middot; <a href=\"" + l.omUrl + "\" target=\"_blank\">OM</a>" : "";
-    var note = l.verifiedNote ? "<br><span class=\"sub\">" + l.verifiedNote + "</span>" : "";
-    var rejCls = "btn-reject" + (l.rejected ? " on" : "");
-    var rejLbl = l.rejected ? "Rejected" : "X";
-    var rejBtn = "<button class=\"" + rejCls + "\" onclick=\"toggleReject('" + l.id + "')\">"+rejLbl+"</button>";
-    var row = "<tr class=\"" + cls + "\">";
-    row += "<td><a href=\"" + mapUrl + "\" target=\"_blank\">" + addr + "</a>" + badge + "<br><span class=\"sub\">" + (l.city||"") + ", " + (l.state||"") + "</span>" + note + "</td>";
-    row += "<td class=\"center\">" + (l.dist != null ? l.dist + " mi" : "?") + "</td>";
-    row += "<td class=\"right\">" + price + "</td>";
-    row += "<td class=\"center\">" + cap + "</td>";
-    row += "<td class=\"right\">" + noi + "</td>";
-    row += "<td class=\"right\">" + nnn + "</td>";
-    row += "<td class=\"center\">" + occ + "</td>";
-    row += "<td class=\"right\">" + sqft + "</td>";
-    row += "<td class=\"center\">" + traffic + "</td>";
-    row += "<td>" + srcLink + omLink + "</td>";
-    row += "<td class=\"center\">" + rejBtn + "</td>";
-    row += "<td class=\"center\"><button class=\"btn-rm\" onclick=\"removeListing('" + l.id + "')\">RM</button></td>";
-    row += "</tr>";
-    tbody.innerHTML += row;
-  });
-  var avgCap = capCount > 0 ? (totalCap / capCount).toFixed(2) : "--";
-  var nc = listings.filter(function(l) { return l.isNew; }).length;
-  var nt = listings.filter(function(l) { return !l.aadt; }).length;
-  document.getElementById("statsBar").innerHTML =
-    "<span class=\"stat\"><b>" + listings.length + "</b> listings</span>" +
-    "<span class=\"stat\"><b>" + avgCap + "%</b> avg CAP</span>" +
-    "<span class=\"stat\"><b>" + nc + "</b> new</span>" +
-    "<span class=\"stat\"><b>" + nt + "</b> missing traffic</span>";
-}
-
-function toggleReject(id) {
-  var idx = listings.findIndex(function(l) { return l.id === id; });
-  if (idx >= 0) {
-    listings[idx].rejected = !listings[idx].rejected;
-    if (listings[idx].rejected) { rejections[id] = true; } else { delete rejections[id]; }
-    saveToCloud();
-    render();
-  }
-}
-
-function removeListing(id) {
-  var idx = listings.findIndex(function(l) { return l.id === id; });
-  if (idx < 0) return;
-  var l = listings[idx];
-  var label = (l.address || l.name || id) + (l.city ? ", " + l.city : "") + (l.state ? " " + l.state : "");
-  if (!confirm("Remove \"" + label + "\" permanently? This cannot be undone.")) return;
-  listings.splice(idx, 1);
-  delete rejections[id];
-  saveToCloud();
-  render();
-}
-
-function togglePaste() {
-  var a = document.getElementById("pasteArea");
-  a.style.display = a.style.display === "none" ? "block" : "none";
-}
-
-function loadJSON() {
-  var text = document.getElementById("jsonInput").value.trim();
-  var status = document.getElementById("loadStatus");
-  try {
-    var nd = JSON.parse(text);
-    if (!Array.isArray(nd)) { status.textContent = "Error: not an array"; return; }
-    var added = 0, updated = 0, removed = 0;
-    nd.forEach(function(item) {
-      var id = item.id || (item.address + "-" + item.city).toLowerCase().replace(/\s+/g, "-");
-      var idx = listings.findIndex(function(l) { return l.id === id; });
-      if (item.remove === true) {
-        if (idx >= 0) { listings.splice(idx, 1); removed++; }
-      } else if (idx >= 0) {
-        Object.keys(item).forEach(function(k) { if (item[k] != null) listings[idx][k] = item[k]; });
-        updated++;
-      } else {
-        item.id = id; item.isNew = true; listings.push(item); added++;
-      }
-    });
-    saveToCloud();
-    var msg = added + " new, " + updated + " updated";
-    if (removed > 0) msg += ", " + removed + " removed";
-    status.textContent = msg;
-    document.getElementById("jsonInput").value = "";
-    render();
-  } catch(e) {
-    status.textContent = "Parse error: " + e.message;
-  }
-}
-
-function copyTable() {
-  var h = "Property\tCity\tState\tDist\tPrice\tCAP\tNOI\tNNN\tOcc\tSqft\tTraffic\tSource\tBroker\tNotes\n";
-  var rows = listings.map(function(l) {
-    var noi = (l.capRate && l.price) ? Math.round(l.price * l.capRate / 100) : "";
-    return [l.address||"",l.city||"",l.state||"",l.dist||"",l.price||"",l.capRate||"",noi,l.nnn||"",l.occ||"",l.sqft||"",l.aadt||"",l.url||"",l.broker||"",l.verifiedNote||""].join("\t");
-  }).join("\n");
-  navigator.clipboard.writeText(h + rows).then(function() { alert("Copied " + listings.length + " listings!"); });
-}
-
-function exportCSV() {
-  var f = function(v) { return '"' + (v||"").toString().replace(/"/g, '""') + '"'; };
-  var h = "Property,City,State,Dist,Price,CAP,NOI,NNN,Occ,Sqft,Traffic,Road,Source,OM,Broker,Notes\n";
-  var rows = listings.map(function(l) {
-    var noi = (l.capRate && l.price) ? Math.round(l.price
+    var note = l.verifiedNote ? "<br><span class=\"sub\">" + l.verifiedNote + "</
