@@ -38,6 +38,8 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
 .right { text-align:right; } .center { text-align:center; }
 .btn-reject { background:transparent; color:#e74c3c; border:1px solid #e74c3c; border-radius:3px; cursor:pointer; padding:3px 8px; font-size:11px; }
 .btn-reject.on { background:#e74c3c; color:#fff; }
+.btn-rm { background:transparent; color:#c0392b; border:1px solid #c0392b; border-radius:3px; cursor:pointer; padding:3px 8px; font-size:11px; }
+.btn-rm:hover { background:#c0392b; color:#fff; }
 .footer { text-align:center; color:#555; font-size:11px; margin-top:15px; }
 </style>
 </head>
@@ -74,6 +76,7 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
   <th class="center" onclick="sortBy('aadt')">Traffic &#8645;</th>
   <th>Links</th>
   <th class="center">Reject</th>
+  <th class="center">RM</th>
 </tr></thead>
 <tbody id="tbody"></tbody>
 </table>
@@ -182,6 +185,7 @@ function render() {
     row += "<td class=\"center\">" + traffic + "</td>";
     row += "<td>" + srcLink + omLink + "</td>";
     row += "<td class=\"center\">" + rejBtn + "</td>";
+    row += "<td class=\"center\"><button class=\"btn-rm\" onclick=\"removeListing('" + l.id + "')\">RM</button></td>";
     row += "</tr>";
     tbody.innerHTML += row;
   });
@@ -203,6 +207,18 @@ function toggleReject(id) {
     saveToCloud();
     render();
   }
+}
+
+function removeListing(id) {
+  var idx = listings.findIndex(function(l) { return l.id === id; });
+  if (idx < 0) return;
+  var l = listings[idx];
+  var label = (l.address || l.name || id) + (l.city ? ", " + l.city : "") + (l.state ? " " + l.state : "");
+  if (!confirm("Remove \"" + label + "\" permanently? This cannot be undone.")) return;
+  listings.splice(idx, 1);
+  delete rejections[id];
+  saveToCloud();
+  render();
 }
 
 function togglePaste() {
@@ -253,25 +269,4 @@ function exportCSV() {
   var f = function(v) { return '"' + (v||"").toString().replace(/"/g, '""') + '"'; };
   var h = "Property,City,State,Dist,Price,CAP,NOI,NNN,Occ,Sqft,Traffic,Road,Source,OM,Broker,Notes\n";
   var rows = listings.map(function(l) {
-    var noi = (l.capRate && l.price) ? Math.round(l.price * l.capRate / 100) : "";
-    return f(l.address)+","+f(l.city)+","+f(l.state)+","+(l.dist||"")+","+(l.price||"")+","+(l.capRate||"")+","+noi+","+(l.nnn||"")+","+(l.occ||"")+","+(l.sqft||"")+","+(l.aadt||"")+","+f(l.aadtRoad)+","+f(l.url)+","+f(l.omUrl)+","+f(l.broker)+","+f(l.verifiedNote);
-  }).join("\n");
-  var b = new Blob([h+rows], {type:"text/csv"});
-  var a = document.createElement("a"); a.href = URL.createObjectURL(b);
-  a.download = "re_bot_" + new Date().toISOString().slice(0,10) + ".csv"; a.click();
-}
-
-function clearData() {
-  if (confirm("Reset to original " + INITIAL.length + " listings?")) {
-    listings = JSON.parse(JSON.stringify(INITIAL));
-    rejections = {};
-    saveToCloud();
-    render();
-  }
-}
-
-loadFromCloud();
-
-</script>
-</body>
-</html>
+    var noi = (l.capRate && l.price) ? Math.round(l.price
