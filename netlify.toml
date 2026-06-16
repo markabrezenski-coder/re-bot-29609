@@ -1,4 +1,6 @@
 [build]
-  command = ""
-  publish = "/"
-  ignore = "exit 0"
+command = ""
+publish = "/"
+
+[build.environment]
+PYTHON_VERSION = "3.11"
