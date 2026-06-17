@@ -44,6 +44,7 @@ jobs:
         run: |
           git config user.name  "RE Bot"
           git config user.email "re-bot@github-actions"
-          git add known_listings.json re_bot_29609.html
-          git diff --cached --quiet || git commit -m "RE Bot daily update — $(date +'%Y-%m-%d')"
+          git add known_listings.json
+          git add re_bot_29609.html 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "RE Bot daily update â $(date +'%Y-%m-%d')"
           git push
