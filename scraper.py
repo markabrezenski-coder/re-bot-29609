@@ -1,5 +1,5 @@
 """
-RE Bot — Strip Mall Tracker for ZIP 29609
+RE Bot â Strip Mall Tracker for ZIP 29609
 Playwright headless browser scraper.
 Sources: LoopNet (Playwright), Crexi (Playwright + login), CityFeet (Playwright),
          CommercialSearch (Playwright).
@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 import requests
 
-# ── Self-install Playwright if missing ───────────────────────────────────────
+# ââ Self-install Playwright if missing âââââââââââââââââââââââââââââââââââââââ
 def ensure_playwright():
     try:
         from playwright.sync_api import sync_playwright
@@ -25,7 +25,7 @@ def ensure_playwright():
     print("[boot] Installing Chromium browser...")
     subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
     print("[boot] Installing Chromium system deps (Ubuntu 24 compatible)...")
-    # install-deps fails on Ubuntu 24 (libasound2 renamed to libasound2t64) — install manually
+    # install-deps fails on Ubuntu 24 (libasound2 renamed to libasound2t64) â install manually
     deps = [
         "libnss3", "libnspr4", "libatk1.0-0", "libatk-bridge2.0-0",
         "libcups2", "libdrm2", "libxkbcommon0", "libxcomposite1",
@@ -88,7 +88,7 @@ DISTANCE_MAP = {
     "Johnson City":140,"Kingsport":145,
 }
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ââ Helpers âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def haversine(lat2, lon2):
     dlat = math.radians(lat2 - HOME_LAT)
@@ -289,10 +289,10 @@ def extract_listing_detail(soup, url):
     return d
 
 
-# ── SCRAPERS ──────────────────────────────────────────────────────────────────
+# ââ SCRAPERS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def scrape_cityfeet(playwright):
-    print("\n[CityFeet — Playwright]")
+    print("\n[CityFeet â Playwright]")
     out = []
     pages = [
         ("SC","https://www.cityfeet.com/cont/south-carolina/shopping-centers-for-sale"),
@@ -343,7 +343,7 @@ def scrape_cityfeet(playwright):
 
 
 def scrape_loopnet(playwright):
-    print("\n[LoopNet — Playwright]")
+    print("\n[LoopNet â Playwright]")
     from bs4 import BeautifulSoup
     out = []
     search_urls = [
@@ -383,7 +383,7 @@ def scrape_loopnet(playwright):
                 price_est = parse_price(pm.group()) if pm else None
                 listing_urls.append((state, full, price_est))
 
-    print(f"  Found {len(listing_urls)} listing URLs — fetching details...")
+    print(f"  Found {len(listing_urls)} listing URLs â fetching details...")
 
     for state, url, est_price in listing_urls[:80]:
         try:
@@ -407,7 +407,7 @@ def scrape_loopnet(playwright):
             }
             if is_valid(item):
                 out.append(item)
-                print(f"    ✓ {addr}, {city} {lstate} — ${price:,.0f}"
+                print(f"    â {addr}, {city} {lstate} â ${price:,.0f}"
                       + (f" CAP {item['cap']:.1f}%" if item.get("cap") else "")
                       + (f" NOI ${item['noi']:,.0f}" if item.get("noi") else ""))
         except Exception as e:
@@ -419,11 +419,11 @@ def scrape_loopnet(playwright):
 
 
 def scrape_crexi(playwright):
-    print("\n[Crexi — Playwright + Login]")
+    print("\n[Crexi â Playwright + Login]")
     from bs4 import BeautifulSoup
     out = []
     if not CREXI_EMAIL or not CREXI_PASSWORD:
-        print("  No Crexi credentials — skipping.")
+        print("  No Crexi credentials â skipping.")
         return out
 
     browser, ctx = new_browser_context(playwright)
@@ -449,9 +449,9 @@ def scrape_crexi(playwright):
         time.sleep(6)
         current_url = page.url
         if "login" in current_url.lower():
-            print("  Login may have failed — continuing anyway")
+            print("  Login may have failed â continuing anyway")
         else:
-            print(f"  Login OK — on {current_url[:60]}")
+            print(f"  Login OK â on {current_url[:60]}")
     except Exception as e:
         print(f"  Login error: {e}")
 
@@ -482,7 +482,7 @@ def scrape_crexi(playwright):
                 seen_urls.add(full)
                 listing_urls.append((state, full))
 
-    print(f"  Found {len(listing_urls)} Crexi listing URLs — fetching details...")
+    print(f"  Found {len(listing_urls)} Crexi listing URLs â fetching details...")
 
     for state, url in listing_urls[:100]:
         try:
@@ -506,7 +506,7 @@ def scrape_crexi(playwright):
             }
             if is_valid(item):
                 out.append(item)
-                print(f"    ✓ {addr}, {city} {lstate} — ${price:,.0f}"
+                print(f"    â {addr}, {city} {lstate} â ${price:,.0f}"
                       + (f" CAP {item['cap']:.1f}%" if item.get("cap") else "")
                       + (f" NOI ${item['noi']:,.0f}" if item.get("noi") else ""))
         except Exception as e:
@@ -517,7 +517,7 @@ def scrape_crexi(playwright):
     return out
 
 
-# ── Filter / dedup / compare ─────────────────────────────────────────────────
+# ââ Filter / dedup / compare âââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def filter_listings(raw):
     from bs4 import BeautifulSoup
@@ -588,13 +588,13 @@ def update_known(known, current, active_ids):
     return known
 
 
-# ── Email ─────────────────────────────────────────────────────────────────────
+# ââ Email âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-def fp(p): return f"${p:,.0f}" if p else "—"
-def fc(c): return f"{c:.2f}%" if c else "—"
-def fn(n): return f"${n:,.0f}" if n else "—"
-def fq(q): return f"${q:.2f}/SF" if q else "—"
-def fo(o): return f"{o}%" if o is not None else "—"
+def fp(p): return f"${p:,.0f}" if p else "â"
+def fc(c): return f"{c:.2f}%" if c else "â"
+def fn(n): return f"${n:,.0f}" if n else "â"
+def fq(q): return f"${q:.2f}/SF" if q else "â"
+def fo(o): return f"{o}%" if o is not None else "â"
 
 def build_email(current, new_l, drops):
     today   = datetime.date.today().strftime("%B %d, %Y")
@@ -612,22 +612,22 @@ def build_email(current, new_l, drops):
             style = "background:#eef6fd;"
             badge = (f' <span style="font-size:10px;background:#E6F1FB;color:#0C447C;'
                      f'padding:1px 6px;border-radius:4px;font-weight:bold">'
-                     f'PRICE DROP ▼ was {fp(item.get("prev_price"))}</span>')
-        addr   = item.get("address","—")
+                     f'PRICE DROP â¼ was {fp(item.get("prev_price"))}</span>')
+        addr   = item.get("address","â")
         city   = item.get("city","")
         state  = item.get("state","")
         gmap   = item.get("maps_url", maps_url(addr, city, state))
         src    = f'<span style="font-size:10px;background:#f1f0e8;color:#5f5e5a;padding:1px 5px;border-radius:3px">{item.get("source","")}</span>'
-        yr     = f" · Built {item['year_built']}" if item.get("year_built") else ""
+        yr     = f" Â· Built {item['year_built']}" if item.get("year_built") else ""
         ten    = f'<br><span style="font-size:10px;color:#888780">Tenants: {item["tenants"]}</span>' if item.get("tenants") else ""
-        om     = f' · <a href="{item["om_url"]}" style="color:#185FA5">OM</a>' if item.get("om_url") else ""
-        sqft_s = f"{item['sqft']:,} SF" if item.get("sqft") else "—"
-        aadt_s = f"{item['aadt']:,} VPD" if item.get("aadt") else "—"
+        om     = f' Â· <a href="{item["om_url"]}" style="color:#185FA5">OM</a>' if item.get("om_url") else ""
+        sqft_s = f"{item['sqft']:,} SF" if item.get("sqft") else "â"
+        aadt_s = f"{item['aadt']:,} VPD" if item.get("aadt") else "â"
         rows += (
             f'<tr style="{style}">'
             f'<td style="{td}"><strong>{addr}</strong>{badge}<br>'
             f'<span style="color:#888780">{city}, {state}{yr}</span><br>{src}{ten}</td>'
-            f'<td style="{td};white-space:nowrap">{item.get("dist","—")} mi</td>'
+            f'<td style="{td};white-space:nowrap">{item.get("dist","â")} mi</td>'
             f'<td style="{td};white-space:nowrap">{fp(item.get("price"))}</td>'
             f'<td style="{td}">{fc(item.get("cap"))}</td>'
             f'<td style="{td}">{fn(item.get("noi"))}</td>'
@@ -642,15 +642,15 @@ def build_email(current, new_l, drops):
         )
     sc = "#0F6E56" if new_l else "#888780"
     st = f"{len(new_l)} new listing(s) found" if new_l else "No new listings today"
-    if drops: st += f" · {len(drops)} price drop(s)"
+    if drops: st += f" Â· {len(drops)} price drop(s)"
     headers = ["Property","Dist","Price","CAP","NOI","NNN/SF","Occ","Sqft","Traffic","Links"]
     return (
         f'<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
         f'<body style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;background:#f5f5f3;margin:0;padding:20px">'
         f'<div style="max-width:1020px;margin:0 auto">'
         f'<div style="background:#fff;border-radius:10px;padding:20px 24px;border:1px solid #e0dfd8;margin-bottom:16px">'
-        f'<h1 style="font-size:16px;font-weight:500;margin:0 0 6px">RE Bot — Strip Mall Tracker · 29609</h1>'
-        f'<div style="font-size:11px;color:#888780;margin-bottom:10px">{today} · {", ".join(sources)} · $1M–$5M · 200mi · SC/NC/GA/TN</div>'
+        f'<h1 style="font-size:16px;font-weight:500;margin:0 0 6px">RE Bot â Strip Mall Tracker Â· 29609</h1>'
+        f'<div style="font-size:11px;color:#888780;margin-bottom:10px">{today} Â· {", ".join(sources)} Â· $1Mâ$5M Â· 200mi Â· SC/NC/GA/TN</div>'
         f'<p style="font-size:13px;color:{sc};margin:0;font-weight:500">{st}</p></div>'
         f'<div style="background:#fff;border-radius:10px;border:1px solid #e0dfd8;overflow:hidden">'
         f'<table style="width:100%;border-collapse:collapse;font-size:12px">'
@@ -658,7 +658,7 @@ def build_email(current, new_l, drops):
         + "".join(f'<th style="{hs}">{h}</th>' for h in headers)
         + f'</tr></thead><tbody>{rows}</tbody></table></div>'
         f'<p style="font-size:11px;color:#888780;margin-top:14px;text-align:center">'
-        f'RE Bot · Playwright · LoopNet + Crexi + CityFeet · 200mi of 29609</p>'
+        f'RE Bot Â· Playwright Â· LoopNet + Crexi + CityFeet Â· 200mi of 29609</p>'
         f'</div></body></html>'
     )
 
@@ -691,8 +691,8 @@ def update_html(current, new_ids, drop_ids):
         u = item.get("url","").replace('"','\\"')
         om = (item.get("om_url","") or "").replace('"','\\"')
         b = item.get("source","")
-        n = f"{a} — {c}, {item.get('state','')}"
-        note = f"{b} — FOR SALE {fp(item.get('price'))}"
+        n = f"{a} â {c}, {item.get('state','')}"
+        note = f"{b} â FOR SALE {fp(item.get('price'))}"
         if item.get("cap"): note += f" CAP {item['cap']:.1f}%"
         if item.get("noi"): note += f" NOI {fn(item['noi'])}"
         if flag == "drop": note += f" (was {fp(item.get('prev_price'))})"
@@ -712,13 +712,13 @@ def update_html(current, new_ids, drop_ids):
     html = re.sub(r'id="b-run">[^<]*<',
                   f'id="b-run">Last run: {datetime.date.today().strftime("%b %d, %Y")}<', html)
     HTML_TRACKER_FILE.write_text(html, encoding="utf-8")
-    print(f"  HTML updated — {len(current)} listings.")
+    print(f"  HTML updated â {len(current)} listings.")
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ââ Main ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def main():
-    print(f"\n{'='*60}\nRE Bot — {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n{'='*60}")
+    print(f"\n{'='*60}\nRE Bot â {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n{'='*60}")
     all_raw = []
     with sync_playwright() as pw:
         all_raw += scrape_cityfeet(pw)
@@ -738,20 +738,206 @@ def main():
     for i in new_l:
         print(f"  NEW: {i.get('address')} {i.get('city')},{i.get('state')} {fp(i.get('price'))} [{i.get('source')}]")
     for i in drops:
-        print(f"  DROP: {i.get('address')} {fp(i.get('prev_price'))}→{fp(i.get('price'))}")
+        print(f"  DROP: {i.get('address')} {fp(i.get('prev_price'))}â{fp(i.get('price'))}")
 
     save_known(update_known(known, current, active_ids))
     update_html(current, {i["id"] for i in new_l}, {i["id"] for i in drops})
 
+
+    # ââ Sold-price detection ââââââââââââââââââââââââââââââââââââââââââââââ
+    if JSONBIN_KEY:
+        print("\n[sold-check] Loading cloud data...")
+        cloud_data = load_cloud_data()
+        if cloud_data.get("listings"):
+            with sync_playwright() as pw2:
+                cloud_data, changed = check_sold_prices(pw2, cloud_data)
+            if changed:
+                save_cloud_data(cloud_data)
+        else:
+            print("[sold-check] No listings in cloud data â skipping.")
+    else:
+        print("[sold-check] JSONBIN_KEY not set â skipping sold-price check.")
+
     today_s = datetime.date.today().strftime("%B %d, %Y")
     subject = (
-        f"RE Bot · {len(new_l)} NEW listing(s) · {today_s}" if new_l else
-        f"RE Bot · {len(drops)} price drop(s) · {today_s}" if drops else
-        f"RE Bot · Daily update · {today_s} · {len(current)} listings"
+        f"RE Bot Â· {len(new_l)} NEW listing(s) Â· {today_s}" if new_l else
+        f"RE Bot Â· {len(drops)} price drop(s) Â· {today_s}" if drops else
+        f"RE Bot Â· Daily update Â· {today_s} Â· {len(current)} listings"
     )
     print(f"\nSending: {subject}")
     send_email(subject, build_email(current, new_l, drops))
-    print(f"\n{'='*60}\nDone — {len(current)} listings.\n{'='*60}\n")
+    print(f"\n{'='*60}\nDone â {len(current)} listings.\n{'='*60}\n")
 
 if __name__ == "__main__":
     main()
+
+
+# ââ JSONBin cloud integration âââââââââââââââââââââââââââââââââââââââââââââââââ
+
+JSONBIN_URL = os.environ.get("JSONBIN_URL", "")
+JSONBIN_KEY = os.environ.get("JSONBIN_KEY", "")
+
+def load_cloud_data():
+    try:
+        r = requests.get(JSONBIN_URL + "/latest",
+                         headers={"X-Master-Key": JSONBIN_KEY}, timeout=15)
+        r.raise_for_status()
+        return r.json().get("record", {})
+    except Exception as e:
+        print(f"  [cloud] GET failed: {e}")
+        return {}
+
+def save_cloud_data(data):
+    try:
+        r = requests.put(JSONBIN_URL,
+                         headers={"X-Master-Key": JSONBIN_KEY,
+                                  "Content-Type": "application/json"},
+                         json=data, timeout=20)
+        r.raise_for_status()
+        print(f"  [cloud] PUT OK â transactions: {len(data.get('transactions', []))}")
+    except Exception as e:
+        print(f"  [cloud] PUT failed: {e}")
+
+
+# ââ Sold-price detection ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+def _extract_sold_price_from_text(text):
+    """Pull a dollar amount from page text near 'sold' keyword."""
+    patterns = [
+        r'(?:sold\s+for|sale\s+price|closed\s+at|sold\s+at)[^\$\n]{0,30}\$([\d,]+)',
+        r'\$([\d,]+)(?:[^\n]{0,20})(?:sold|closed|sale)',
+        r'(?:sold|closed)[^\$\n]{0,60}\$([\d,]+(?:\.\d+)?[MK]?)',
+    ]
+    for pat in patterns:
+        m = re.search(pat, text, re.I)
+        if m:
+            raw = m.group(1).replace(",", "")
+            if raw.endswith("M"): return int(float(raw[:-1]) * 1_000_000)
+            if raw.endswith("K"): return int(float(raw[:-1]) * 1_000)
+            v = int(raw)
+            if 500_000 <= v <= 20_000_000:
+                return v
+    return None
+
+
+def check_loopnet_sold(page, listing):
+    """Check a LoopNet listing URL for sold status. Returns sold_price or None."""
+    from bs4 import BeautifulSoup
+    url = listing.get("url", "")
+    if not url or "loopnet.com" not in url:
+        return None
+    try:
+        if not safe_goto(page, url, wait=5):
+            return None
+        soup = BeautifulSoup(page.content(), "html.parser")
+        text = soup.get_text(" ", strip=True)
+        # Check for sold indicators
+        sold_indicators = ["this property has sold", "property sold", "sale closed",
+                           "off market", "sold price", "closed price"]
+        page_lower = text.lower()
+        if not any(ind in page_lower for ind in sold_indicators):
+            return None
+        price = _extract_sold_price_from_text(text)
+        if price:
+            print(f"    [LoopNet] SOLD {listing.get('address')} â ${price:,.0f}")
+        else:
+            print(f"    [LoopNet] shows sold but no price found: {listing.get('address')}")
+        return price
+    except Exception as e:
+        print(f"    [LoopNet] error for {listing.get('address')}: {e}")
+        return None
+
+
+def websearch_sold_price(page, listing):
+    """DuckDuckGo search for press-release sold price. Returns (price, source_url) or (None, None)."""
+    from bs4 import BeautifulSoup
+    addr = listing.get("address", "")
+    city = listing.get("city", "")
+    state = listing.get("state", "")
+    query = f'"{addr}" {city} {state} sold strip mall sale price 2024 OR 2025 OR 2026'
+    ddg_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
+    try:
+        if not safe_goto(page, ddg_url, wait=5):
+            return None, None
+        soup = BeautifulSoup(page.content(), "html.parser")
+        results = soup.find_all("a", class_=re.compile(r"result"))
+        for res in results[:5]:
+            href = res.get("href", "")
+            snippet_el = res.find_next("a", class_=re.compile(r"result__snippet"))
+            snippet = (snippet_el.get_text(" ") if snippet_el else res.get_text(" "))
+            price = _extract_sold_price_from_text(snippet)
+            if price:
+                print(f"    [WebSearch] SOLD {addr} â ${price:,.0f} via {href[:60]}")
+                return price, href
+        return None, None
+    except Exception as e:
+        print(f"    [WebSearch] error for {addr}: {e}")
+        return None, None
+
+
+def check_sold_prices(playwright, cloud_data):
+    """
+    For each tracked listing without a transaction, check LoopNet + web search.
+    Returns updated cloud_data dict (only if changes were made).
+    """
+    listings = cloud_data.get("listings", [])
+    transactions = cloud_data.get("transactions", [])
+    already_logged = {t["id"] for t in transactions}
+    candidates = [l for l in listings
+                  if l.get("id") and l["id"] not in already_logged
+                  and not l.get("rejected") and not l.get("removed")]
+
+    if not candidates:
+        print("[sold-check] No candidates to check.")
+        return cloud_data, False
+
+    print(f"[sold-check] Checking {len(candidates)} listings for sold status...")
+    browser, ctx = new_browser_context(playwright)
+    page = ctx.new_page()
+    new_transactions = []
+    today = datetime.date.today().isoformat()
+
+    for listing in candidates:
+        lid = listing["id"]
+        addr = listing.get("address", "")
+        print(f"  Checking: {addr}, {listing.get('city')} {listing.get('state')}")
+
+        # Source 1: LoopNet listing page
+        sold_price = check_loopnet_sold(page, listing)
+        source_url = listing.get("url") if sold_price else None
+        source_label = "loopnet" if sold_price else None
+
+        # Source 2: Web/press-release search
+        if not sold_price:
+            sold_price, source_url = websearch_sold_price(page, listing)
+            source_label = "press-release" if sold_price else None
+
+        if sold_price and listing.get("price"):
+            ratio = sold_price / listing["price"]
+            tx = {
+                "id": lid,
+                "address": addr,
+                "city": listing.get("city"),
+                "state": listing.get("state"),
+                "askingPrice": listing["price"],
+                "soldPrice": sold_price,
+                "ratio": round(ratio, 4),
+                "soldDate": today,
+                "source": source_label,
+                "sourceUrl": source_url,
+                "notes": None,
+                "addedAt": datetime.datetime.utcnow().isoformat() + "Z",
+            }
+            new_transactions.append(tx)
+            print(f"    â Logged {ratio*100:.1f}% of ask")
+
+    ctx.close(); browser.close()
+
+    if new_transactions:
+        cloud_data["transactions"] = transactions + new_transactions
+        cloud_data["lastUpdated"] = datetime.datetime.utcnow().isoformat() + "Z"
+        print(f"[sold-check] Added {len(new_transactions)} new transaction(s).")
+        return cloud_data, True
+
+    print("[sold-check] No new sold prices found.")
+    return cloud_data, False
