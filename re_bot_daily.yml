@@ -36,6 +36,8 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           CREXI_EMAIL:        ${{ secrets.CREXI_EMAIL }}
           CREXI_PASSWORD:     ${{ secrets.CREXI_PASSWORD }}
+          JSONBIN_KEY:        ${{ secrets.JSONBIN_KEY }}
+          JSONBIN_URL:        ${{ secrets.JSONBIN_URL }}
         run: python scraper.py
 
       - name: Commit updated files back to repo
