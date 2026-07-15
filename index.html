@@ -197,6 +197,7 @@ function loadFromCloud() {
       var seen = new Set(merged.map(function(l) { return l.id; }));
       rec.listings.forEach(function(l) { if (!seen.has(l.id)) merged.push(l); });
       listings = merged;
+    listings = deduplicateListings(listings);
     }
     if (rec.rejections) {
       rejections = rec.rejections;
@@ -266,7 +267,7 @@ function render() {
     var addr = l.address || l.name || "?";
     var mapUrl = "https://www.google.com/maps/search/" + encodeURIComponent(addr + ", " + (l.city || "") + ", " + (l.state || ""));
     var srcLink = l.url ? "<a href=\"" + l.url + "\" target=\"_blank\">" + (l.sourcePlatform || "Source") + "</a>" : "--";
-    var omLink = l.omUrl ? " &middot; <a href=\"" + l.omUrl + "\" target=\"_blank\">OM</a>" : "";
+    var omLink = l.omUrl ? " &middot; <a href=\"" + l.omUrl + "\" target=\"_blank\">OM</a>" : "<button class=\"btn-set-om\" style=\"font-size:10px;padding:1px 5px;background:#2a2a2a;color:#888;border:1px solid #444;border-radius:3px;cursor:pointer;\" onclick=\"setOmUrl('" + l.id + "')\" title=\"Add Offering Memorandum URL\">+OM</button>";
     var note = l.verifiedNote ? "<br><span class=\"sub\">" + l.verifiedNote + "</span>" : "";
     var rejCls = "btn-reject" + (l.rejected ? " on" : "");
     var likeCls = "btn-like" + (l.liked ? " on" : "");
