@@ -121,7 +121,7 @@ a { color:#6ba3d6; text-decoration:none; } a:hover { text-decoration:underline; 
 
 <!-- Feedback toast -->
 <div id="rmFeedbackToast">
-  <div class="toast-title">Feedback queued ÃÂ¢ÃÂÃÂ</div>
+  <div class="toast-title">Feedback queued &#x2713;</div>
   <div class="toast-body" id="toastBody"></div>
   <button class="toast-dismiss" onclick="document.getElementById('rmFeedbackToast').style.display='none'">Dismiss</button>
 </div>
@@ -270,7 +270,7 @@ function render() {
     var note = l.verifiedNote ? "<br><span class=\"sub\">" + l.verifiedNote + "</span>" : "";
     var rejCls = "btn-reject" + (l.rejected ? " on" : "");
     var likeCls = "btn-like" + (l.liked ? " on" : "");
-    var rejBtn = "<span class=\"action-btns\"><button class=\"" + rejCls + "\" onclick=\"toggleReject('" + l.id + "')\" title=\"Reject\">&#x2715;</button><button class=\"" + likeCls + "\" onclick=\"toggleLike('" + l.id + "')\" title=\"Like\">&#x2713;</button></span>";
+    var rejBtn = "<span class=\"action-btns\"><button class=\"" + rejCls + "\" onclick=\"openNoteDialog('reject', '" + l.id + "')\" title=\"Reject\">&#x2715;</button><button class=\"" + likeCls + "\" onclick=\"openNoteDialog('like', '" + l.id + "')\" title=\"Like\">&#x2713;</button></span>";
     var row = "<tr class=\"" + cls + "\">";
     row += "<td><a href=\"" + mapUrl + "\" target=\"_blank\">" + addr + "</a>" + badge + "<br><span class=\"sub\">" + (l.city||"") + ", " + (l.state||"") + "</span>" + note + "</td>";
     row += "<td class=\"center\">" + (l.dist != null ? l.dist + " mi" : "?") + "</td>";
@@ -528,6 +528,30 @@ function clearData() {
 
 loadFromCloud();
 
+
+var _noteDlgT=null,_noteDlgId=null;
+function openNoteDialog(type,id){
+  _noteDlgT=type;_noteDlgId=id;
+  var l=listings.find(function(x){return x.id===id;});
+  document.getElementById("noteDlgTitle").textContent=(type==="like"?"Note on liking":"Note on rejecting")+": "+(l?l.address:"this listing");
+  document.getElementById("noteText").value=(l?(type==="like"?(l.likeNote||""):(l.rejectNote||"")):"");
+  document.getElementById("noteDialog").style.display="block";
+  document.getElementById("noteOverlay").style.display="block";
+  setTimeout(function(){document.getElementById("noteText").focus();},50);
+}
+function _noteDlgSave(){
+  var note=document.getElementById("noteText").value.trim();
+  var l=listings.find(function(x){return x.id===_noteDlgId;});
+  if(l&&note){if(_noteDlgT==="like")l.likeNote=note;else l.rejectNote=note;}
+  var t=_noteDlgT,id=_noteDlgId;
+  _noteDlgClose();
+  if(t==="like")toggleLike(id);else toggleReject(id);
+}
+function _noteDlgClose(){
+  document.getElementById("noteDialog").style.display="none";
+  document.getElementById("noteOverlay").style.display="none";
+  _noteDlgT=null;_noteDlgId=null;
+}
 </script>
-</body>
+<div id="noteDialog" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #555;border-radius:8px;padding:20px;z-index:10000;min-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.7);"><div id="noteDlgTitle" style="font-weight:bold;margin-bottom:10px;color:#e0e0e0;font-size:14px;"></div><textarea id="noteText" placeholder="Why are you doing this? (optional — stored with listing)" style="width:100%;height:70px;background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:8px;font-size:12px;box-sizing:border-box;resize:vertical;"></textarea><div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button onclick="_noteDlgClose()" style="padding:5px 12px;background:#333;color:#e0e0e0;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:12px;">Skip</button><button onclick="_noteDlgSave()" style="padding:5px 12px;background:#d4a017;color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;">Save note</button></div></div><div id="noteOverlay" onclick="_noteDlgClose()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;"></div></body>
 </html>
