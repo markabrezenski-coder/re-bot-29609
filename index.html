@@ -295,7 +295,7 @@ function render() {
   document.getElementById("statsBar").innerHTML =
     "<span class=\"stat\"><b>" + listings.length + "</b> listings</span>" +
     "<span class=\"stat\"><b>" + avgCap + "%</b> avg CAP</span>" +
-    "<span class=\"stat\"><b>" + soldRatio + "</b> sold/ask (" + transactions.length + " deals)</span>" +
+    "<span class=\"stat\"><b>" + soldRatio + "</b> sold/ask (" + transactions.length + " deals <button onclick=\"openAddSoldComp()\" style=\"font-size:10px;padding:1px 6px;background:#2a2a2a;color:#d4a017;border:1px solid #d4a017;border-radius:3px;cursor:pointer;margin-left:4px;\">+</button></span>" +
     "<span class=\"stat\"><b>" + nc + "</b> new</span>" +
     "<span class=\"stat\"><b>" + nt + "</b> missing traffic</span>";
 }
@@ -552,6 +552,41 @@ function _noteDlgClose(){
   document.getElementById("noteOverlay").style.display="none";
   _noteDlgT=null;_noteDlgId=null;
 }
+
+function openAddSoldComp() {
+  document.getElementById("scAddr").value="";
+  document.getElementById("scCity").value="";
+  document.getElementById("scState").value="";
+  document.getElementById("scAsk").value="";
+  document.getElementById("scSold").value="";
+  document.getElementById("scDate").value=new Date().toISOString().split("T")[0];
+  document.getElementById("scNotes").value="";
+  document.getElementById("scSource").value="";
+  document.getElementById("scErr").style.display="none";
+  document.getElementById("addSoldDlg").style.display="block";
+  document.getElementById("addSoldOverlay").style.display="block";
+  setTimeout(function(){document.getElementById("scAddr").focus();},50);
+}
+function _scClose() {
+  document.getElementById("addSoldDlg").style.display="none";
+  document.getElementById("addSoldOverlay").style.display="none";
+}
+function _scSave() {
+  var addr=document.getElementById("scAddr").value.trim();
+  var ask=parseFloat(document.getElementById("scAsk").value);
+  var sold=parseFloat(document.getElementById("scSold").value);
+  var dt=document.getElementById("scDate").value;
+  if(!addr||!ask||!sold||!dt){document.getElementById("scErr").textContent="Address, prices, and date are required.";document.getElementById("scErr").style.display="block";return;}
+  var city=document.getElementById("scCity").value.trim();
+  var state=document.getElementById("scState").value.trim().toUpperCase();
+  var slug=addr.toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-"+(state||"").toLowerCase();
+  var comp={id:slug,address:addr,city:city,state:state,askingPrice:ask,soldPrice:sold,ratio:Math.round(sold/ask*1000)/10,soldDate:dt,source:"manual",sourceUrl:document.getElementById("scSource").value.trim(),notes:document.getElementById("scNotes").value.trim(),addedAt:new Date().toISOString()};
+  transactions.push(comp);
+  saveToCloud();
+  _scClose();
+  renderStats();
+  showToast("Sold comp added: "+addr+" ("+comp.ratio+"% sold/ask)");
+}
 </script>
-<div id="noteDialog" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #555;border-radius:8px;padding:20px;z-index:10000;min-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.7);"><div id="noteDlgTitle" style="font-weight:bold;margin-bottom:10px;color:#e0e0e0;font-size:14px;"></div><textarea id="noteText" placeholder="Why are you doing this? (optional — stored with listing)" style="width:100%;height:70px;background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:8px;font-size:12px;box-sizing:border-box;resize:vertical;"></textarea><div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button onclick="_noteDlgClose()" style="padding:5px 12px;background:#333;color:#e0e0e0;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:12px;">Skip</button><button onclick="_noteDlgSave()" style="padding:5px 12px;background:#d4a017;color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;">Save note</button></div></div><div id="noteOverlay" onclick="_noteDlgClose()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;"></div></body>
+<div id="noteDialog" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #555;border-radius:8px;padding:20px;z-index:10000;min-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.7);"><div id="noteDlgTitle" style="font-weight:bold;margin-bottom:10px;color:#e0e0e0;font-size:14px;"></div><textarea id="noteText" placeholder="Why are you doing this? (optional — stored with listing)" style="width:100%;height:70px;background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:8px;font-size:12px;box-sizing:border-box;resize:vertical;"></textarea><div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button onclick="_noteDlgClose()" style="padding:5px 12px;background:#333;color:#e0e0e0;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:12px;">Skip</button><button onclick="_noteDlgSave()" style="padding:5px 12px;background:#d4a017;color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;">Save note</button></div></div><div id="noteOverlay" onclick="_noteDlgClose()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;"></div><div id="addSoldDlg" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #555;border-radius:8px;padding:24px;z-index:10001;min-width:360px;max-width:480px;box-shadow:0 8px 30px rgba(0,0,0,0.8);"><div style="font-weight:bold;font-size:15px;color:#d4a017;margin-bottom:16px;">&#x2795; Add Sold Comp</div><div style="display:grid;gap:10px;"><input id="scAddr" placeholder="Address" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input id="scCity" placeholder="City" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;"><input id="scState" placeholder="State (e.g. NC)" maxlength="2" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;text-transform:uppercase;"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input id="scAsk" placeholder="Asking price ($)" type="number" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;"><input id="scSold" placeholder="Sold price ($)" type="number" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;"></div><input id="scDate" type="date" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;"><input id="scNotes" placeholder="Notes (optional)" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;"><input id="scSource" placeholder="Source URL (optional)" style="background:#111;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:7px 9px;font-size:13px;"></div><div id="scErr" style="color:#e05;font-size:12px;margin-top:6px;display:none;"></div><div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button onclick="_scClose()" style="padding:6px 14px;background:#333;color:#e0e0e0;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:13px;">Cancel</button><button onclick="_scSave()" style="padding:6px 14px;background:#d4a017;color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">Save Comp</button></div></div><div id="addSoldOverlay" onclick="_scClose()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;"></div></body>
 </html>
